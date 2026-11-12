@@ -81,6 +81,7 @@ steps/       Definições dos passos, um ficheiro por funcionalidade
 support/     World (estado de cada cenário), hooks (preparação e limpeza),
              contas de teste e proteção de dados sensíveis
 cucumber.js  Configuração do Cucumber
+.vscode/     Configuração da extensão Cucumber do VS Code (navegação e autocompletar dos passos)
 ```
 
 ---
