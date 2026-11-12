@@ -10,6 +10,12 @@ export class MundoToolshop extends World {
 
   // Última resposta recebida, para os passos "Então" a verificarem.
   resposta?: APIResponse;
+
+  // Token de acesso, guardado depois de um login com sucesso.
+  token?: string;
+
+  // Email com que se fez login, para comparar com os dados da conta.
+  emailLogin?: string;
 }
 
 setWorldConstructor(MundoToolshop);
