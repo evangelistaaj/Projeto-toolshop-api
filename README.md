@@ -39,7 +39,10 @@ O objetivo é testar a API diretamente, sem browser, usando o Cucumber com World
 
 ## 🚀 Como executar
 
-**Pré-requisitos:** Node.js 26 ou superior e Git.
+**Pré-requisitos:**
+
+- Node.js 26 ou superior e Git;
+- a Toolshop a correr localmente com Docker ([instruções no repositório original](https://github.com/testsmith-io/practice-software-testing)), com a API em `http://localhost:8091`.
 
 ```bash
 git clone https://github.com/evangelistaaj/Projeto-toolshop-api.git
@@ -50,6 +53,13 @@ npm test
 
 > ℹ️ Não é preciso instalar browsers: os testes de API não abrem nenhum.
 
+Por omissão, os testes usam a API em `http://localhost:8091`. Para apontar para outro endereço, define a variável de ambiente `API_URL` antes de correr (PowerShell):
+
+```powershell
+$env:API_URL = "http://localhost:8091"
+npm test
+```
+
 ---
 
 ## 📂 Estrutura
@@ -57,7 +67,7 @@ npm test
 ```
 features/    Cenários em Gherkin (português)
 steps/       Definições dos passos, um ficheiro por funcionalidade
-support/     World (estado de cada cenário) e código de suporte
+support/     World (estado de cada cenário) e hooks (preparação e limpeza)
 cucumber.js  Configuração do Cucumber
 ```
 
@@ -83,16 +93,22 @@ Funcionalidade: Catálogo de produtos
 
 | Cenários | Automatizados | Pendentes |
 |---|---|---|
-| 1 | 0 | 1 |
+| 1 | 1 | 0 |
+
+**O que já é verificado**
+
+| Funcionalidade | Cenário | Verificações |
+|---|---|---|
+| Catálogo de produtos | Consultar o catálogo | Código HTTP 200, lista de produtos não vazia, tipos dos campos `id`, `name`, `price` e `in_stock` |
 
 ---
 
 ## 🗺️ Plano
 
 - [x] Estrutura do projeto (Cucumber + TypeScript)
-- [ ] World e hooks *(em curso)*
-- [ ] Primeiro teste: catálogo de produtos
-- [ ] Autenticação
+- [x] World e hooks
+- [x] Primeiro teste: catálogo de produtos
+- [ ] Autenticação *(a seguir)*
 - [ ] CRUD de produtos e carrinho
 - [ ] Testes para os problemas encontrados na API (faturas e stock)
 - [ ] Relatórios e integração contínua
