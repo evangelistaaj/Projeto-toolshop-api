@@ -7,9 +7,9 @@ import type { MundoToolshop } from './world';
 const API_URL = process.env.API_URL ?? 'http://localhost:8091';
 
 Before(async function (this: MundoToolshop) {
-  this.api = await request.newContext({ baseURL: API_URL });
+    this.api = await request.newContext({ baseURL: API_URL });
 });
 
 After(async function (this: MundoToolshop) {
-  await this.api?.dispose();
+    await this.api?.dispose();
 });
