@@ -27,6 +27,13 @@ export class MundoToolshop extends World {
   // Todos os produtos criados no cenário, para o hook After os apagar.
   produtosCriados: string[] = [];
 
+  // Carrinho do cenário e o produto que lá foi posto.
+  carrinhoId?: string;
+  produtoNoCarrinhoId?: string;
+
+  // Todos os carrinhos criados no cenário, para o hook After os apagar.
+  carrinhosCriados: string[] = [];
+
 }
 
 setWorldConstructor(MundoToolshop);

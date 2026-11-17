@@ -106,7 +106,7 @@ Funcionalidade: Catálogo de produtos
 
 | Cenários | Automatizados ✅ | Bugs conhecidos 🐞 | Pendentes |
 |---|---|---|---|
-| 10 | 9 | 1 | 0 |
+| 17 | 16 | 1 | 0 |
 
 **O que já é verificado**
 
@@ -122,8 +122,13 @@ Funcionalidade: Catálogo de produtos
 | Gestão de produtos | Apagar um produto | Código 204; a consulta seguinte devolve 404 |
 | Gestão de produtos | Consultar um produto que não existe | Código 404 |
 | Gestão de produtos 🐞 | Criar um produto sem login | Código 401 — **falha: a API aceita** (bug [#1](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1)) |
+| Carrinho | Juntar um produto com a quantidade 1 e 10 (partição válida) | Código 200; o carrinho tem o produto numa só linha, com a quantidade pedida |
+| Carrinho | Juntar um produto com a quantidade 0 e -1 (partição inválida) | Código 422 |
+| Carrinho | Alterar a quantidade de um produto | Código 200; o carrinho mostra a quantidade nova |
+| Carrinho | Remover um produto | Código 204; o carrinho fica vazio |
+| Carrinho | Juntar um produto que não existe | Código 422 |
 
-> 🧹 Os cenários que criam produtos apagam-nos no fim (hook `After`), por isso a base de dados fica como estava. Correm só na Toolshop local (tag `@so-local`).
+> 🧹 Os cenários que criam produtos ou carrinhos apagam-nos no fim (hook `After`), por isso a base de dados fica como estava. Correm só na Toolshop local (tag `@so-local`).
 
 ---
 
@@ -134,8 +139,8 @@ Funcionalidade: Catálogo de produtos
 - [x] Primeiro teste: catálogo de produtos
 - [x] Autenticação
 - [x] CRUD de produtos
-- [ ] Carrinho *(a seguir)*
-- [ ] Testes para os problemas encontrados na API (faturas e stock)
+- [x] Carrinho
+- [ ] Testes para os problemas encontrados na API (faturas e stock) *(a seguir)*
 - [ ] Relatórios e integração contínua
 
 ---
@@ -158,6 +163,9 @@ Diferenças entre a documentação (Swagger) e o comportamento real da API, enco
 | `POST /users/login` | `token_type: "Bearer"` | `token_type: "bearer"` | 🟡 Inconsistência sem efeito: o esquema não distingue maiúsculas |
 | `POST /users/login` | `expires_in: 120` (exemplo) | `expires_in: 300` (5 minutos) | ℹ️ A duração real do token não está documentada |
 | `POST /products` | Sucesso: `200` | Sucesso: `201 Created` | 🟡 O real segue a convenção REST; a documentação está errada |
+| `GET /carts/{id}` | A resposta só tem `id` | Tem também `cart_items`, cada um com `product_id`, `quantity` e o produto completo | ⚠️ O conteúdo do carrinho não está documentado |
+| `DELETE /carts/{id}` e `DELETE /carts/{id}/product/{productId}` | Listam `401`, mas não estão marcados como protegidos | Funcionam sem login (normal num carrinho anónimo) | 🟡 A documentação contradiz-se |
+| Erros de validação (ex.: `POST /carts/{id}` com quantidade 0) | `422` | `422` só com `Accept: application/json`; com `Accept: */*` a API redireciona para `/`, que devolve `404` | ⚠️ Um cliente que não peça JSON recebe um erro enganador. Os testes enviam sempre `Accept: application/json` |
 | `POST /products`, `PUT` e `PATCH /products/{id}` | Sem autenticação exigida (só o `DELETE` está protegido) | O `POST` aceita mesmo pedidos sem login (ver bug [#1](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1)) | 🔴 Documentação e implementação concordam, mas na direção errada |
 
 ### 💡 Próximos passos
