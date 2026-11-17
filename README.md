@@ -60,6 +60,17 @@ $env:API_URL = "http://localhost:8091"
 npm test
 ```
 
+### 🧹 Repor os dados
+
+Cada teste cria e apaga os seus próprios dados, por isso os testes passam com ou sem reposição. Algumas coisas não podem ser apagadas pela API (por exemplo, faturas), e para as remover há dois comandos:
+
+| Comando | O que faz |
+|---|---|
+| `npm run db:reset` | Repõe a base de dados da Toolshop local com os dados iniciais |
+| `npm run test:limpo` | Repõe os dados e corre todos os testes |
+
+> ⚠️ A reposição apaga **tudo** o que foi criado na Toolshop local, incluindo dados criados à mão na interface.
+
 ### 🔑 Contas de teste
 
 Os testes usam a conta de cliente de demonstração criada pelos dados iniciais da Toolshop (`customer2@practicesoftwaretesting.com`). São credenciais públicas de uma aplicação de treino, definidas em `support/contas.ts`, e podem ser trocadas sem mexer no código:
