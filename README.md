@@ -115,11 +115,11 @@ Funcionalidade: Catálogo de produtos
 
 ## 📊 Estado atual
 
-| Cenários | Automatizados ✅ | Bugs conhecidos 🐞 | Pendentes |
-|---|---|---|---|
-| 26 | 19 | 7 | 0 |
+| Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
+|---|---|---|---|---|
+| 26 | 19 | 7 | 0 | 4 |
 
-> Os esquemas de cenário contam uma vez por exemplo.
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 7 execuções a vermelho correspondem a **4 bugs** — #1 (1 execução), #2 (3: PT, FR e GB), #3 (2: país inexistente e formato inválido) e #4 (1).
 
 **O que já é verificado**
 
