@@ -1,4 +1,10 @@
 {
-  "cucumber.features": ["features/**/*.feature"],
-  "cucumber.glue": ["steps/**/*.ts", "support/**/*.ts"]
+  "cucumber.features": [
+    "features/**/*.feature"
+  ],
+  "cucumber.glue": [
+    "steps/**/*.ts",
+    "support/**/*.ts"
+  ],
+  "files.eol": "\n"
 }
