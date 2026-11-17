@@ -37,6 +37,11 @@ export class MundoToolshop extends World {
   // Código postal da última pesquisa de morada, para comparar com a resposta.
   codigoPostalPesquisado?: string;
 
+  // Compra: quantidade no carrinho, morada enviada e fatura criada.
+  quantidadeNoCarrinho?: number;
+  moradaDaFatura?: Record<string, string>;
+  faturaId?: string;
+
 }
 
 setWorldConstructor(MundoToolshop);

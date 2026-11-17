@@ -11,6 +11,8 @@ export type DadosProduto = {
   is_location_offer: boolean;
   is_rental: boolean;
   co2_rating: string;
+  // Não está documentado no Swagger, mas a API aceita-o (e o código-fonte confirma).
+  stock?: number;
 };
 
 // Vai buscar o primeiro elemento de uma lista da API (categorias, marcas, imagens).
@@ -52,7 +54,9 @@ export async function apagarProdutos(api: APIRequestContext, ids: string[]) {
     const resposta = await api.delete(`/products/${id}`, {
       headers: { Authorization: `Bearer ${access_token}` },
     });
-    if (resposta.status() !== 204 && resposta.status() !== 404) {
+    // 409: o produto já foi comprado (está numa fatura) e não pode ser apagado.
+    // Fica na base de dados até ao próximo "npm run db:reset".
+    if (![204, 404, 409].includes(resposta.status())) {
       console.warn(`Limpeza: não foi possível apagar o produto ${id} (HTTP ${resposta.status()})`);
     }
   }
