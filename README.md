@@ -117,9 +117,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 26 | 19 | 7 | 0 | 4 |
+| 31 | 21 | 10 | 0 | 6 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 7 execuções a vermelho correspondem a **4 bugs** — #1 (1 execução), #2 (3: PT, FR e GB), #3 (2: país inexistente e formato inválido) e #4 (1).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 10 execuções a vermelho correspondem a **6 bugs** — #1 (1 execução), #2 (3: PT, FR e GB), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro) e #6 (1).
 
 **O que já é verificado**
 
@@ -145,6 +145,11 @@ Funcionalidade: Catálogo de produtos
 | Pesquisa de morada 🐞 | País que não existe (XX) | Código 422 — **falha: devolve 200 com uma morada americana** (bug [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3)) |
 | Pesquisa de morada 🐞 | Código postal português com formato inválido (`1000`) | Código 422 — **falha: devolve 200** (bug [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3)) |
 | Pesquisa de morada 🐞 | Argentina | O distrito é uma das 24 províncias argentinas (sem distinguir acentos nem maiúsculas) — **falha: devolve "Illinois"** (bug [#4](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/4)) |
+| Faturas | Comprar com a morada sugerida pelo código postal | Código 201; número `INV-…`; a fatura, consultada à parte, tem a morada enviada e uma linha com o produto, a quantidade, o preço unitário e o subtotal certos |
+| Faturas | Cidade que não corresponde ao código postal: a compra é recusada | Código 422; nenhuma fatura criada |
+| Faturas 🐞 | Cidade que não corresponde ao código postal: o erro aponta para a cidade | O erro está no campo `billing_city` — **falha: vem em `billing_country`** (bug [#5](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5)) |
+| Faturas 🐞 | Cidade que não corresponde ao código postal: a mensagem refere o código postal | A mensagem menciona "postal", "postcode" ou "zip" — **falha: diz que a cidade não pertence ao país** (bug [#5](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5)) |
+| Faturas 🐞 | Cidade que não corresponde ao código postal: formato do erro | `{"message": ..., "errors": {...}}`, como no resto da API — **falha** (bug [#6](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6)) |
 
 > 🧹 Os cenários que criam produtos ou carrinhos apagam-nos no fim (hook `After`), por isso a base de dados fica como estava. Correm só na Toolshop local (tag `@so-local`).
 
@@ -171,6 +176,8 @@ Funcionalidade: Catálogo de produtos
 | [#2](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/2) | `GET /postcode-lookup` devolve o **distrito vazio** para PT, FR e GB, e o distrito é obrigatório na fatura | 🟠 Média (impede compras com a morada sugerida) | Aberto |
 | [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3) | `GET /postcode-lookup` **aceita entradas inválidas** (país inexistente, código postal com formato errado) e inventa uma morada | 🟠 Média | Aberto |
 | [#4](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/4) | `GET /postcode-lookup` devolve **estados dos EUA** para moradas argentinas | 🟠 Média | Aberto |
+| [#5](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5) | `POST /invoices` com uma cidade que não corresponde ao código postal: o erro aponta para o **país** e a mensagem engana | 🟠 Média (o cliente não sabe o que corrigir) | Aberto |
+| [#6](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6) | `POST /invoices`: os erros de validação **não seguem o formato** do resto da API | 🟡 Baixa | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido`. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`.
 
@@ -184,6 +191,7 @@ Diferenças entre a documentação (Swagger) e o comportamento real da API, enco
 | `POST /users/login` | `token_type: "Bearer"` | `token_type: "bearer"` | 🟡 Inconsistência sem efeito: o esquema não distingue maiúsculas |
 | `POST /users/login` | `expires_in: 120` (exemplo) | `expires_in: 300` (5 minutos) | ℹ️ A duração real do token não está documentada |
 | `POST /products` | Sucesso: `200` | Sucesso: `201 Created` | 🟡 O real segue a convenção REST; a documentação está errada |
+| `POST /invoices` | Sucesso: `200` | Sucesso: `201 Created` | 🟡 A documentação está errada |
 | `GET /carts/{id}` | A resposta só tem `id` | Tem também `cart_items`, cada um com `product_id`, `quantity` e o produto completo | ⚠️ O conteúdo do carrinho não está documentado |
 | `DELETE /carts/{id}` e `DELETE /carts/{id}/product/{productId}` | Listam `401`, mas não estão marcados como protegidos | Funcionam sem login (normal num carrinho anónimo) | 🟡 A documentação contradiz-se |
 | Erros de validação (ex.: `POST /carts/{id}` com quantidade 0) | `422` | `422` só com `Accept: application/json`; com `Accept: */*` a API redireciona para `/`, que devolve `404` | ⚠️ Um cliente que não peça JSON recebe um erro enganador. Os testes enviam sempre `Accept: application/json` |

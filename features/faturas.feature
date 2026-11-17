@@ -25,19 +25,22 @@ Funcionalidade: Compra com fatura
     Cenário: A compra com uma cidade que não corresponde ao código postal é recusada
       Quando compro o carrinho com o código postal "1000-001" em "PT", a cidade "Lisboa" e o distrito "Lisboa"
       Então a compra é recusada
-    # Bug: o erro aponta para o país (billing_country). Ver issue (por abrir).
+    # Bug: o erro aponta para o país (billing_country). Ver issue #5:
+    # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5
 
     @bug-conhecido
     Cenário: O erro de uma cidade que não corresponde ao código postal aponta para a cidade
       Quando compro o carrinho com o código postal "1000-001" em "PT", a cidade "Lisboa" e o distrito "Lisboa"
       Então o erro da compra aponta para a cidade
-    # Bug: a mensagem diz que a cidade não pertence ao país. Ver issue (por abrir).
+    # Bug: a mensagem diz que a cidade não pertence ao país. Ver issue #5:
+    # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5
 
     @bug-conhecido
     Cenário: A mensagem de erro explica que a cidade não corresponde ao código postal
       Quando compro o carrinho com o código postal "1000-001" em "PT", a cidade "Lisboa" e o distrito "Lisboa"
       Então a mensagem de erro da compra refere o código postal
-    # Bug: os erros das faturas não seguem o formato do resto da API. Ver issue (por abrir).
+    # Bug: os erros das faturas não seguem o formato do resto da API. Ver issue #6:
+    # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6
 
     @bug-conhecido
     Cenário: O erro de uma cidade que não corresponde ao código postal segue o formato da API
