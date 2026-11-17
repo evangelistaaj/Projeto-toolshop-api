@@ -5,6 +5,36 @@ import { cabecalhosDeAutenticacao, tokenDeAdministrador } from '../support/auten
 import { dadosDeProdutoValidos } from '../support/produtos';
 import { corpoSeguro } from '../support/seguranca';
 
+// Pesquisa a morada sugerida para um código postal, como a interface faz.
+async function moradaSugerida(mundo: MundoToolshop, codigoPostal: string, pais: string) {
+    const pesquisa = await mundo.api.get('/postcode-lookup', {
+        params: { country: pais, postcode: codigoPostal, house_number: '1' },
+    });
+    expect(pesquisa.status(), await corpoSeguro(pesquisa)).toBe(200);
+    return pesquisa.json();
+}
+
+// Compra o carrinho do cenário com a morada indicada.
+async function comprarCarrinho(mundo: MundoToolshop, morada: Record<string, string>) {
+    if (!mundo.carrinhoId) {
+        throw new Error('Este passo precisa de um carrinho com produtos antes.');
+    }
+    mundo.moradaDaFatura = morada;
+    mundo.resposta = await mundo.api.post('/invoices', {
+        headers: cabecalhosDeAutenticacao(mundo),
+        data: {
+            ...morada,
+            // Pagamento na entrega: não precisa de detalhes, e o pagamento não é o que estamos a testar.
+            payment_method: 'cash-on-delivery',
+            payment_details: {},
+            cart_id: mundo.carrinhoId,
+        },
+    });
+    if (mundo.resposta.ok()) {
+        mundo.faturaId = (await mundo.resposta.json()).id;
+    }
+}
+
 Given('que tenho no carrinho a quantidade {int} de um produto de teste com stock {int}',
     async function (this: MundoToolshop, quantidade: number, stock: number) {
         // 1. O administrador cria um produto só para este cenário, com stock conhecido.
@@ -34,40 +64,31 @@ Given('que tenho no carrinho a quantidade {int} de um produto de teste com stock
 
 When('compro o carrinho com a morada sugerida para {string} em {string} e o distrito {string}',
     async function (this: MundoToolshop, codigoPostal: string, pais: string, distrito: string) {
-        if (!this.carrinhoId) {
-            throw new Error('Este passo precisa de um carrinho com produtos antes.');
-        }
-
-        // A rua e a cidade vêm da pesquisa do código postal, como na interface.
-        const pesquisa = await this.api.get('/postcode-lookup', {
-            params: { country: pais, postcode: codigoPostal, house_number: '1' },
-        });
-        expect(pesquisa.status(), await corpoSeguro(pesquisa)).toBe(200);
-        const sugerida = await pesquisa.json();
-
-        this.moradaDaFatura = {
+        const sugerida = await moradaSugerida(this, codigoPostal, pais);
+        await comprarCarrinho(this, {
             billing_street: `${sugerida.street} ${sugerida.house_number}`,
             billing_city: sugerida.city,
             billing_state: distrito,
             billing_country: pais,
             billing_postal_code: codigoPostal,
-        };
-
-        this.resposta = await this.api.post('/invoices', {
-            headers: cabecalhosDeAutenticacao(this),
-            data: {
-                ...this.moradaDaFatura,
-                // Pagamento na entrega: não precisa de detalhes, e o pagamento não é o que estamos a testar.
-                payment_method: 'cash-on-delivery',
-                payment_details: {},
-                cart_id: this.carrinhoId,
-            },
         });
-        if (this.resposta.ok()) {
-            this.faturaId = (await this.resposta.json()).id;
-        }
     },
 );
+
+When('compro o carrinho com o código postal {string} em {string}, a cidade {string} e o distrito {string}',
+    async function (this: MundoToolshop, codigoPostal: string, pais: string, cidade: string, distrito: string) {
+        // A rua continua a ser a sugerida; só a cidade é a indicada no cenário.
+        const sugerida = await moradaSugerida(this, codigoPostal, pais);
+        await comprarCarrinho(this, {
+            billing_street: `${sugerida.street} ${sugerida.house_number}`,
+            billing_city: cidade,
+            billing_state: distrito,
+            billing_country: pais,
+            billing_postal_code: codigoPostal,
+        });
+    },
+);
+
 
 Then('a fatura é criada com os produtos do carrinho',
     async function (this: MundoToolshop) {
@@ -98,4 +119,46 @@ Then('a fatura é criada com os produtos do carrinho',
         expect(linha.quantity, 'quantidade da linha').toBe(this.quantidadeNoCarrinho);
         expect(linha.unit_price, 'preço unitário').toBe(this.dadosEnviados.price);
         expect(fatura.subtotal, 'subtotal = preço × quantidade').toBeCloseTo(this.dadosEnviados.price * this.quantidadeNoCarrinho!, 2);
+    });
+
+// Corpo de uma compra recusada. Confirma primeiro que foi mesmo recusada:
+// se a compra tivesse sido aceite, verificar o erro não faria sentido.
+async function erroDaCompra(mundo: MundoToolshop) {
+    if (!mundo.resposta) {
+        throw new Error('Este passo precisa de uma compra antes.');
+    }
+    expect(mundo.resposta.status(), await corpoSeguro(mundo.resposta)).toBe(422);
+    return mundo.resposta.json();
+}
+
+// Os erros por campo, nos dois formatos que a API usa:
+// {"message": ..., "errors": {"campo": [...]}} ou diretamente {"campo": [...]}.
+function errosPorCampo(corpo: any): Record<string, string[]> {
+    return corpo.errors ?? corpo;
+}
+
+Then('a compra é recusada',
+    async function (this: MundoToolshop) {
+        await erroDaCompra(this);
+        expect(this.faturaId, 'não deve ser criada nenhuma fatura').toBeUndefined();
+    });
+
+Then('o erro da compra aponta para a cidade',
+    async function (this: MundoToolshop) {
+        const campos = Object.keys(errosPorCampo(await erroDaCompra(this)));
+        expect(campos, `o erro devia estar no campo "billing_city"; veio em: ${campos.join(', ')}`).toContain('billing_city');
+    });
+
+Then('a mensagem de erro da compra refere o código postal',
+    async function (this: MundoToolshop) {
+        const mensagens = Object.values(errosPorCampo(await erroDaCompra(this))).flat().join(' ');
+        expect(mensagens, 'a mensagem deve referir o código postal').toMatch(/postal|postcode|zip/i);
+    });
+
+Then('o erro da compra segue o formato de erros da API',
+    async function (this: MundoToolshop) {
+        const corpo = await erroDaCompra(this);
+        expect(corpo, 'formato esperado: {"message": ..., "errors": {...}}').toEqual(
+            expect.objectContaining({ message: expect.any(String), errors: expect.any(Object) }),
+        );
     });
