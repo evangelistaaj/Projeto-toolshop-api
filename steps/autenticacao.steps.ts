@@ -1,19 +1,14 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import type { MundoToolshop } from '../support/world';
-import { contaCliente } from '../support/contas';
+import { contaCliente, contaAdmin } from '../support/contas';
+import { fazerLogin } from '../support/autenticacao';
 import { corpoSeguro } from '../support/seguranca';
 
-// Faz o pedido de login e, se correr bem, guarda o token no World.
-// Fica numa função porque vai servir a vários passos (incluindo o "Dado" do cenário 3).
-async function fazerLogin(mundo: MundoToolshop, email: string, password: string) {
-    mundo.resposta = await mundo.api.post('/users/login', { data: { email, password } });
-    if (mundo.resposta.ok()) {
-        const corpo = await mundo.resposta.json();
-        mundo.token = corpo.access_token;
-        mundo.emailLogin = email;
-    }
-}
+Given('que fiz login com a conta de administrador', async function (this: MundoToolshop) {
+    await fazerLogin(this, contaAdmin.email, contaAdmin.password);
+    expect(this.resposta!.status(), await corpoSeguro(this.resposta!)).toBe(200);
+});
 
 When('faço login com a conta de cliente de demonstração', async function (this: MundoToolshop) {
     await fazerLogin(this, contaCliente.email, contaCliente.password);
