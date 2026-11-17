@@ -4,9 +4,10 @@ import type { MundoToolshop } from '../support/world';
 import { corpoSeguro } from '../support/seguranca';
 
 // Passo genérico: serve a qualquer funcionalidade que verifique um código HTTP.
-Then('recebo uma resposta com o código {int}', async function (this: MundoToolshop, codigo: number) {
-  if (!this.resposta) {
-    throw new Error('Este passo precisa de um "Quando" que faça um pedido antes.');
-  }
-  expect(this.resposta.status(), await corpoSeguro(this.resposta)).toBe(codigo);
-});
+Then('recebo uma resposta com o código {int}',
+  async function (this: MundoToolshop, codigo: number) {
+    if (!this.resposta) {
+      throw new Error('Este passo precisa de um "Quando" que faça um pedido antes.');
+    }
+    expect(this.resposta.status(), await corpoSeguro(this.resposta)).toBe(codigo);
+  });

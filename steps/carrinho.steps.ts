@@ -24,14 +24,15 @@ async function linhasDoCarrinho(mundo: MundoToolshop) {
     return carrinho.cart_items as { product_id: string; quantity: number }[];
 }
 
-Given('que tenho um carrinho vazio', async function (this: MundoToolshop) {
-    const resposta = await this.api.post('/carts');
-    // Fonte: Swagger (201, "CartCreatedResponse").
-    expect(resposta.status(), await corpoSeguro(resposta)).toBe(201);
-    const corpo = await resposta.json();
-    this.carrinhoId = corpo.id;
-    this.carrinhosCriados.push(corpo.id);
-});
+Given('que tenho um carrinho vazio',
+    async function (this: MundoToolshop) {
+        const resposta = await this.api.post('/carts');
+        // Fonte: Swagger (201, "CartCreatedResponse").
+        expect(resposta.status(), await corpoSeguro(resposta)).toBe(201);
+        const corpo = await resposta.json();
+        this.carrinhoId = corpo.id;
+        this.carrinhosCriados.push(corpo.id);
+    });
 
 Given('que o carrinho tem um produto do catálogo com a quantidade {int}',
     async function (this: MundoToolshop, quantidade: number) {
@@ -44,27 +45,30 @@ When('junto ao carrinho um produto do catálogo com a quantidade {int}',
         await juntarAoCarrinho(this, await idDeUmProdutoDoCatalogo(this.api), quantidade);
     });
 
-When('junto ao carrinho um produto que não existe', async function (this: MundoToolshop) {
-    // Id com o formato certo (ULID), mas que não existe nos dados.
-    // A quantidade é válida (1), para que o único motivo de recusa seja o produto.
-    await juntarAoCarrinho(this, '01ZZZZZZZZZZZZZZZZZZZZZZZZ', 1);
-});
-
-When('altero a quantidade desse produto para {int}', async function (this: MundoToolshop, quantidade: number) {
-    if (!this.carrinhoId || !this.produtoNoCarrinhoId) {
-        throw new Error('Este passo precisa de um produto no carrinho antes.');
-    }
-    this.resposta = await this.api.put(`/carts/${this.carrinhoId}/product/quantity`, {
-        data: { product_id: this.produtoNoCarrinhoId, quantity: quantidade },
+When('junto ao carrinho um produto que não existe',
+    async function (this: MundoToolshop) {
+        // Id com o formato certo (ULID), mas que não existe nos dados.
+        // A quantidade é válida (1), para que o único motivo de recusa seja o produto.
+        await juntarAoCarrinho(this, '01ZZZZZZZZZZZZZZZZZZZZZZZZ', 1);
     });
-});
 
-When('removo esse produto do carrinho', async function (this: MundoToolshop) {
-    if (!this.carrinhoId || !this.produtoNoCarrinhoId) {
-        throw new Error('Este passo precisa de um produto no carrinho antes.');
-    }
-    this.resposta = await this.api.delete(`/carts/${this.carrinhoId}/product/${this.produtoNoCarrinhoId}`);
-});
+When('altero a quantidade desse produto para {int}',
+    async function (this: MundoToolshop, quantidade: number) {
+        if (!this.carrinhoId || !this.produtoNoCarrinhoId) {
+            throw new Error('Este passo precisa de um produto no carrinho antes.');
+        }
+        this.resposta = await this.api.put(`/carts/${this.carrinhoId}/product/quantity`, {
+            data: { product_id: this.produtoNoCarrinhoId, quantity: quantidade },
+        });
+    });
+
+When('removo esse produto do carrinho',
+    async function (this: MundoToolshop) {
+        if (!this.carrinhoId || !this.produtoNoCarrinhoId) {
+            throw new Error('Este passo precisa de um produto no carrinho antes.');
+        }
+        this.resposta = await this.api.delete(`/carts/${this.carrinhoId}/product/${this.produtoNoCarrinhoId}`);
+    });
 
 Then('o carrinho tem esse produto com a quantidade {int}',
     async function (this: MundoToolshop, quantidade: number) {
@@ -79,13 +83,15 @@ Then('o carrinho tem esse produto com a quantidade {int}',
         expect(linhas[0].quantity, 'quantidade no carrinho').toBe(quantidade);
     });
 
-Then('o carrinho fica vazio', async function (this: MundoToolshop) {
-    if (!this.resposta) {
-        throw new Error('Este passo precisa de um "Quando" que remova um produto antes.');
-    }
-    // Fonte: Swagger (204).
-    expect(this.resposta.status(), await corpoSeguro(this.resposta)).toBe(204);
+Then('o carrinho fica vazio',
+    async function (this: MundoToolshop) {
+        if (!this.resposta) {
+            throw new Error('Este passo precisa de um "Quando" que remova um produto antes.');
+        }
+        // Fonte: Swagger (204).
+        expect(this.resposta.status(),
+            await corpoSeguro(this.resposta)).toBe(204);
 
-    const linhas = await linhasDoCarrinho(this);
-    expect(linhas, 'o carrinho não deve ter produtos').toEqual([]);
-});
+        const linhas = await linhasDoCarrinho(this);
+        expect(linhas, 'o carrinho não deve ter produtos').toEqual([]);
+    });
