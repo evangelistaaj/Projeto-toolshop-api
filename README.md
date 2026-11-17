@@ -104,9 +104,9 @@ Funcionalidade: Catálogo de produtos
 
 ## 📊 Estado atual
 
-| Cenários | Automatizados | Pendentes |
-|---|---|---|
-| 5 | 5 | 0 |
+| Cenários | Automatizados ✅ | Bugs conhecidos 🐞 | Pendentes |
+|---|---|---|---|
+| 10 | 9 | 1 | 0 |
 
 **O que já é verificado**
 
@@ -117,6 +117,13 @@ Funcionalidade: Catálogo de produtos
 | Autenticação | Login com um email que não existe | Código 401 |
 | Autenticação | Consultar os dados da conta depois do login | Código 200, campos da conta, **a password nunca é devolvida**, o email é o da conta com que se fez login |
 | Autenticação | Consultar os dados da conta sem login | Código 401 |
+| Gestão de produtos | Criar um produto com dados válidos | Código 201; o produto é consultado à parte e tem o nome e o preço enviados |
+| Gestão de produtos | Alterar o preço de um produto | Código 200; a consulta seguinte mostra o preço novo |
+| Gestão de produtos | Apagar um produto | Código 204; a consulta seguinte devolve 404 |
+| Gestão de produtos | Consultar um produto que não existe | Código 404 |
+| Gestão de produtos 🐞 | Criar um produto sem login | Código 401 — **falha: a API aceita** (bug [#1](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1)) |
+
+> 🧹 Os cenários que criam produtos apagam-nos no fim (hook `After`), por isso a base de dados fica como estava. Correm só na Toolshop local (tag `@so-local`).
 
 ---
 
@@ -126,7 +133,8 @@ Funcionalidade: Catálogo de produtos
 - [x] World e hooks
 - [x] Primeiro teste: catálogo de produtos
 - [x] Autenticação
-- [ ] CRUD de produtos e carrinho *(a seguir)*
+- [x] CRUD de produtos
+- [ ] Carrinho *(a seguir)*
 - [ ] Testes para os problemas encontrados na API (faturas e stock)
 - [ ] Relatórios e integração contínua
 
