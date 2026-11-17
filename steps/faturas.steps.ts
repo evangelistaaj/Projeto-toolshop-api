@@ -162,3 +162,13 @@ Then('o erro da compra segue o formato de erros da API',
             expect.objectContaining({ message: expect.any(String), errors: expect.any(Object) }),
         );
     });
+
+Then('a mensagem de erro da compra diz que o distrito é obrigatório',
+    async function (this: MundoToolshop) {
+        const erros = errosPorCampo(await erroDaCompra(this));
+        expect(Object.keys(erros), 'o erro deve estar no campo "billing_state"').toContain('billing_state');
+        expect(
+            erros.billing_state.join(' '),
+            'a mensagem deve dizer que o distrito é obrigatório',
+        ).toMatch(/required|obrigat/i);
+    });

@@ -117,9 +117,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 31 | 21 | 10 | 0 | 6 |
+| 34 | 22 | 12 | 0 | 7 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 10 execuções a vermelho correspondem a **6 bugs** — #1 (1 execução), #2 (3: PT, FR e GB), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro) e #6 (1).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 12 execuções a vermelho correspondem a **7 bugs** — #1 (1 execução), #2 (3: PT, FR e GB), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito) e #7 (1).
 
 **O que já é verificado**
 
@@ -150,6 +150,9 @@ Funcionalidade: Catálogo de produtos
 | Faturas 🐞 | Cidade que não corresponde ao código postal: o erro aponta para a cidade | O erro está no campo `billing_city` — **falha: vem em `billing_country`** (bug [#5](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5)) |
 | Faturas 🐞 | Cidade que não corresponde ao código postal: a mensagem refere o código postal | A mensagem menciona "postal", "postcode" ou "zip" — **falha: diz que a cidade não pertence ao país** (bug [#5](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5)) |
 | Faturas 🐞 | Cidade que não corresponde ao código postal: formato do erro | `{"message": ..., "errors": {...}}`, como no resto da API — **falha** (bug [#6](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6)) |
+| Faturas | Distrito vazio: a compra é recusada | Código 422; nenhuma fatura criada |
+| Faturas 🐞 | Distrito vazio: a mensagem diz que o distrito é obrigatório | Erro no campo `billing_state`, com uma mensagem que diga "required" ou "obrigatório" — **falha: diz "must be a string"** (bug [#7](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/7)) |
+| Faturas 🐞 | Distrito vazio: formato do erro | `{"message": ..., "errors": {...}}` — **falha** (bug [#6](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6)) |
 
 > 🧹 Os cenários que criam produtos ou carrinhos apagam-nos no fim (hook `After`), por isso a base de dados fica como estava. Correm só na Toolshop local (tag `@so-local`).
 
@@ -164,6 +167,7 @@ Funcionalidade: Catálogo de produtos
 - [x] CRUD de produtos
 - [x] Carrinho
 - [ ] Testes para os problemas encontrados na API (faturas e stock) *(a seguir)*
+- [ ] Massa de teste em ficheiros JSON (moradas e produtos com nomes de negócio)
 - [ ] Relatórios e integração contínua
 
 ---
@@ -178,6 +182,7 @@ Funcionalidade: Catálogo de produtos
 | [#4](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/4) | `GET /postcode-lookup` devolve **estados dos EUA** para moradas argentinas | 🟠 Média | Aberto |
 | [#5](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5) | `POST /invoices` com uma cidade que não corresponde ao código postal: o erro aponta para o **país** e a mensagem engana | 🟠 Média (o cliente não sabe o que corrigir) | Aberto |
 | [#6](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6) | `POST /invoices`: os erros de validação **não seguem o formato** do resto da API | 🟡 Baixa | Aberto |
+| [#7](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/7) | `POST /invoices` com o distrito vazio: a mensagem diz **"must be a string"** em vez de dizer que o distrito é obrigatório | 🟠 Média (agravado pelo #2: afeta clientes de PT, FR e GB) | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido`. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`.
 

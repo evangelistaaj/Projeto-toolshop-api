@@ -25,24 +25,48 @@ Funcionalidade: Compra com fatura
     Cenário: A compra com uma cidade que não corresponde ao código postal é recusada
       Quando compro o carrinho com o código postal "1000-001" em "PT", a cidade "Lisboa" e o distrito "Lisboa"
       Então a compra é recusada
-
     # Bug: o erro aponta para o país (billing_country). Ver issue #5:
     # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5
+
     @bug-conhecido
     Cenário: O erro de uma cidade que não corresponde ao código postal aponta para a cidade
       Quando compro o carrinho com o código postal "1000-001" em "PT", a cidade "Lisboa" e o distrito "Lisboa"
       Então o erro da compra aponta para a cidade
-
     # Bug: a mensagem diz que a cidade não pertence ao país. Ver issue #5:
     # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5
+
     @bug-conhecido
     Cenário: A mensagem de erro explica que a cidade não corresponde ao código postal
       Quando compro o carrinho com o código postal "1000-001" em "PT", a cidade "Lisboa" e o distrito "Lisboa"
       Então a mensagem de erro da compra refere o código postal
+    # Bug: os erros das faturas não seguem o formato do resto da API. Ver issue #6:
+    # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6
+
+    @bug-conhecido
+    Cenário: O erro de uma cidade que não corresponde ao código postal segue o formato da API
+      Quando compro o carrinho com o código postal "1000-001" em "PT", a cidade "Lisboa" e o distrito "Lisboa"
+      Então o erro da compra segue o formato de erros da API
+
+  Regra: O distrito é obrigatório
+
+    Contexto:
+      Dado que tenho no carrinho a quantidade 1 de um produto de teste com stock 5
+
+    Cenário: A compra sem distrito é recusada
+      Quando compro o carrinho com a morada sugerida para "1000-001" em "PT" e o distrito ""
+      Então a compra é recusada
+
+    # Bug: a mensagem diz "must be a string" em vez de dizer que o distrito é
+    # obrigatório. Ver issue #7:
+    # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/7
+    @bug-conhecido
+    Cenário: A mensagem de erro diz que o distrito é obrigatório
+      Quando compro o carrinho com a morada sugerida para "1000-001" em "PT" e o distrito ""
+      Então a mensagem de erro da compra diz que o distrito é obrigatório
 
     # Bug: os erros das faturas não seguem o formato do resto da API. Ver issue #6:
     # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6
     @bug-conhecido
-    Cenário: O erro de uma cidade que não corresponde ao código postal segue o formato da API
-      Quando compro o carrinho com o código postal "1000-001" em "PT", a cidade "Lisboa" e o distrito "Lisboa"
+    Cenário: O erro da compra sem distrito segue o formato da API
+      Quando compro o carrinho com a morada sugerida para "1000-001" em "PT" e o distrito ""
       Então o erro da compra segue o formato de erros da API
