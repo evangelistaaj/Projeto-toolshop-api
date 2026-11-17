@@ -42,6 +42,9 @@ export class MundoToolshop extends World {
   moradaDaFatura?: Record<string, string>;
   faturaId?: string;
 
+  // Números das faturas criadas no cenário (para comparar a sequência).
+  numerosDasFaturas?: string[];
+
 }
 
 setWorldConstructor(MundoToolshop);

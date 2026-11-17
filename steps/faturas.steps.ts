@@ -14,6 +14,17 @@ async function moradaSugerida(mundo: MundoToolshop, codigoPostal: string, pais: 
     return pesquisa.json();
 }
 
+// Monta a morada da fatura a partir da sugerida. A cidade pode ser trocada pelo cenário.
+function moradaDaFatura(sugerida: any, codigoPostal: string, pais: string, distrito: string, cidade = sugerida.city) {
+    return {
+        billing_street: `${sugerida.street} ${sugerida.house_number}`,
+        billing_city: cidade,
+        billing_state: distrito,
+        billing_country: pais,
+        billing_postal_code: codigoPostal,
+    };
+}
+
 // Compra o carrinho do cenário com a morada indicada.
 async function comprarCarrinho(mundo: MundoToolshop, morada: Record<string, string>) {
     if (!mundo.carrinhoId) {
@@ -35,57 +46,55 @@ async function comprarCarrinho(mundo: MundoToolshop, morada: Record<string, stri
     }
 }
 
-Given('que tenho no carrinho a quantidade {int} de um produto de teste com stock {int}',
+// Cria, como administrador, um produto só para o cenário, com stock conhecido.
+async function criarProdutoDeTeste(mundo: MundoToolshop, stock: number) {
+    const token = await tokenDeAdministrador(mundo.api);
+    mundo.dadosEnviados = await dadosDeProdutoValidos(mundo.api, { stock });
+    const criacao = await mundo.api.post('/products', {
+        data: mundo.dadosEnviados,
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(criacao.status(), await corpoSeguro(criacao)).toBe(201);
+    mundo.produtoId = (await criacao.json()).id;
+    mundo.produtosCriados.push(mundo.produtoId!);
+}
+
+// Cria um carrinho novo com o produto de teste, na quantidade pedida.
+async function novoCarrinhoCom(mundo: MundoToolshop, quantidade: number) {
+    const carrinho = await mundo.api.post('/carts');
+    expect(carrinho.status(), await corpoSeguro(carrinho)).toBe(201);
+    mundo.carrinhoId = (await carrinho.json()).id;
+    mundo.carrinhosCriados.push(mundo.carrinhoId!);
+
+    const juntar = await mundo.api.post(`/carts/${mundo.carrinhoId}`, {
+        data: { product_id: mundo.produtoId, quantity: quantidade },
+    });
+    expect(juntar.status(), await corpoSeguro(juntar)).toBe(200);
+    mundo.quantidadeNoCarrinho = quantidade;
+}
+
+Given(
+    'que tenho no carrinho a quantidade {int} de um produto de teste com stock {int}',
     async function (this: MundoToolshop, quantidade: number, stock: number) {
-        // 1. O administrador cria um produto só para este cenário, com stock conhecido.
-        const token = await tokenDeAdministrador(this.api);
-        this.dadosEnviados = await dadosDeProdutoValidos(this.api, { stock });
-        const criacao = await this.api.post('/products', {
-            data: this.dadosEnviados,
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        expect(criacao.status(), await corpoSeguro(criacao)).toBe(201);
-        this.produtoId = (await criacao.json()).id;
-        this.produtosCriados.push(this.produtoId!);
-
-        // 2. Um carrinho novo, com esse produto na quantidade pedida.
-        const carrinho = await this.api.post('/carts');
-        expect(carrinho.status(), await corpoSeguro(carrinho)).toBe(201);
-        this.carrinhoId = (await carrinho.json()).id;
-        this.carrinhosCriados.push(this.carrinhoId!);
-
-        const juntar = await this.api.post(`/carts/${this.carrinhoId}`, {
-            data: { product_id: this.produtoId, quantity: quantidade },
-        });
-        expect(juntar.status(), await corpoSeguro(juntar)).toBe(200);
-        this.quantidadeNoCarrinho = quantidade;
+        await criarProdutoDeTeste(this, stock);
+        await novoCarrinhoCom(this, quantidade);
     },
 );
 
 When('compro o carrinho com a morada sugerida para {string} em {string} e o distrito {string}',
     async function (this: MundoToolshop, codigoPostal: string, pais: string, distrito: string) {
+        // no "compro o carrinho com a morada sugerida..."
         const sugerida = await moradaSugerida(this, codigoPostal, pais);
-        await comprarCarrinho(this, {
-            billing_street: `${sugerida.street} ${sugerida.house_number}`,
-            billing_city: sugerida.city,
-            billing_state: distrito,
-            billing_country: pais,
-            billing_postal_code: codigoPostal,
-        });
+        await comprarCarrinho(this, moradaDaFatura(sugerida, codigoPostal, pais, distrito));
     },
 );
 
 When('compro o carrinho com o código postal {string} em {string}, a cidade {string} e o distrito {string}',
     async function (this: MundoToolshop, codigoPostal: string, pais: string, cidade: string, distrito: string) {
         // A rua continua a ser a sugerida; só a cidade é a indicada no cenário.
+        // no "compro o carrinho com o código postal ..., a cidade ... e o distrito ..."
         const sugerida = await moradaSugerida(this, codigoPostal, pais);
-        await comprarCarrinho(this, {
-            billing_street: `${sugerida.street} ${sugerida.house_number}`,
-            billing_city: cidade,
-            billing_state: distrito,
-            billing_country: pais,
-            billing_postal_code: codigoPostal,
-        });
+        await comprarCarrinho(this, moradaDaFatura(sugerida, codigoPostal, pais, distrito, cidade));
     },
 );
 
@@ -172,3 +181,53 @@ Then('a mensagem de erro da compra diz que o distrito é obrigatório',
             'a mensagem deve dizer que o distrito é obrigatório',
         ).toMatch(/required|obrigat/i);
     });
+
+// Número da fatura acabada de criar (confirma primeiro que a compra foi aceite).
+async function numeroDaFatura(mundo: MundoToolshop): Promise<string> {
+    if (!mundo.resposta) {
+        throw new Error('Este passo precisa de uma compra antes.');
+    }
+    expect(mundo.resposta.status(), await corpoSeguro(mundo.resposta)).toBe(201);
+    return (await mundo.resposta.json()).invoice_number;
+}
+
+// A sequência de um número de fatura: o que vem depois de "INV-" e do ano.
+function sequenciaDe(numero: string): number {
+    const partes = numero.match(/^INV-(\d{4})(\d+)$/);
+    if (!partes) {
+        throw new Error(`Número de fatura com formato inesperado: ${numero}`);
+    }
+    return Number(partes[2]);
+}
+
+When('faço duas compras seguidas', async function (this: MundoToolshop) {
+    // Um só produto (com stock para as duas) e um carrinho por compra.
+    await criarProdutoDeTeste(this, 5);
+    this.numerosDasFaturas = [];
+    for (let compra = 1; compra <= 2; compra++) {
+        await novoCarrinhoCom(this, 1);
+        const sugerida = await moradaSugerida(this, '1000-001', 'PT');
+        await comprarCarrinho(this, moradaDaFatura(sugerida, '1000-001', 'PT', 'Lisboa'));
+        this.numerosDasFaturas.push(await numeroDaFatura(this));
+    }
+});
+
+Then('o número da fatura começa pelo ano atual', async function (this: MundoToolshop) {
+    const numero = await numeroDaFatura(this);
+    const ano = new Date().getFullYear();
+    expect(numero, `o número deve começar por INV-${ano}`).toMatch(new RegExp(`^INV-${ano}\\d+$`));
+});
+
+Then('os números das duas faturas são consecutivos', async function (this: MundoToolshop) {
+    const [primeira, segunda] = this.numerosDasFaturas!.map(sequenciaDe);
+    expect(segunda, `faturas: ${this.numerosDasFaturas!.join(' e ')}`).toBe(primeira + 1);
+});
+
+Then('o número da fatura tem o formato INV-ano-sequência de {int} algarismos',
+    async function (this: MundoToolshop, algarismos: number) {
+        const numero = await numeroDaFatura(this);
+        expect(numero, `formato esperado: INV-<ano><sequência de ${algarismos} algarismos>`).toMatch(
+            new RegExp(`^INV-\\d{4}\\d{${algarismos}}$`),
+        );
+    },
+);

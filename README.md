@@ -117,9 +117,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 34 | 22 | 12 | 0 | 7 |
+| 37 | 24 | 13 | 0 | 8 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 12 execuções a vermelho correspondem a **7 bugs** — #1 (1 execução), #2 (3: PT, FR e GB), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito) e #7 (1).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 13 execuções a vermelho correspondem a **8 bugs** — #1 (1 execução), #2 (3: PT, FR e GB), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1) e #8 (1).
 
 **O que já é verificado**
 
@@ -153,6 +153,11 @@ Funcionalidade: Catálogo de produtos
 | Faturas | Distrito vazio: a compra é recusada | Código 422; nenhuma fatura criada |
 | Faturas 🐞 | Distrito vazio: a mensagem diz que o distrito é obrigatório | Erro no campo `billing_state`, com uma mensagem que diga "required" ou "obrigatório" — **falha: diz "must be a string"** (bug [#7](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/7)) |
 | Faturas 🐞 | Distrito vazio: formato do erro | `{"message": ..., "errors": {...}}` — **falha** (bug [#6](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6)) |
+| Faturas | O número da fatura começa pelo ano atual | `INV-` + ano atual |
+| Faturas | Duas compras seguidas têm números consecutivos | A sequência da segunda fatura = a da primeira + 1 |
+| Faturas 🐞 | O número da fatura tem o formato das faturas da loja | `INV-` + ano + 7 algarismos de sequência, como os dados iniciais — **falha: tem 6** (bug [#8](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/8)) |
+
+> 🎯 Os oráculos da numeração dependem só das faturas que o próprio cenário cria. Comparar com as faturas já existentes daria resultados diferentes conforme o número de execuções anteriores (a sequência das faturas novas vai subindo a cada compra).
 
 > 🧹 Os cenários que criam produtos ou carrinhos apagam-nos no fim (hook `After`), por isso a base de dados fica como estava. Correm só na Toolshop local (tag `@so-local`).
 
@@ -183,6 +188,7 @@ Funcionalidade: Catálogo de produtos
 | [#5](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5) | `POST /invoices` com uma cidade que não corresponde ao código postal: o erro aponta para o **país** e a mensagem engana | 🟠 Média (o cliente não sabe o que corrigir) | Aberto |
 | [#6](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6) | `POST /invoices`: os erros de validação **não seguem o formato** do resto da API | 🟡 Baixa | Aberto |
 | [#7](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/7) | `POST /invoices` com o distrito vazio: a mensagem diz **"must be a string"** em vez de dizer que o distrito é obrigatório | 🟠 Média (agravado pelo #2: afeta clientes de PT, FR e GB) | Aberto |
+| [#8](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/8) | `POST /invoices`: as faturas novas têm **um algarismo a menos** na sequência e a numeração **recomeça** abaixo das existentes (risco de números repetidos) | 🔴 Alta (documentos fiscais com números repetidos) | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido`. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`.
 

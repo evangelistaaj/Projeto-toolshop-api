@@ -55,18 +55,38 @@ Funcionalidade: Compra com fatura
     Cenário: A compra sem distrito é recusada
       Quando compro o carrinho com a morada sugerida para "1000-001" em "PT" e o distrito ""
       Então a compra é recusada
-
     # Bug: a mensagem diz "must be a string" em vez de dizer que o distrito é
     # obrigatório. Ver issue #7:
     # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/7
+
     @bug-conhecido
     Cenário: A mensagem de erro diz que o distrito é obrigatório
       Quando compro o carrinho com a morada sugerida para "1000-001" em "PT" e o distrito ""
       Então a mensagem de erro da compra diz que o distrito é obrigatório
-
     # Bug: os erros das faturas não seguem o formato do resto da API. Ver issue #6:
     # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6
+
     @bug-conhecido
     Cenário: O erro da compra sem distrito segue o formato da API
       Quando compro o carrinho com a morada sugerida para "1000-001" em "PT" e o distrito ""
       Então o erro da compra segue o formato de erros da API
+
+  Regra: O número da fatura segue a numeração da loja
+
+    Cenário: O número da fatura começa pelo ano atual
+      Dado que tenho no carrinho a quantidade 1 de um produto de teste com stock 5
+      Quando compro o carrinho com a morada sugerida para "1000-001" em "PT" e o distrito "Lisboa"
+      Então o número da fatura começa pelo ano atual
+
+    Cenário: Duas compras seguidas têm números de fatura consecutivos
+      Quando faço duas compras seguidas
+      Então os números das duas faturas são consecutivos
+
+    # Bug: as faturas novas têm 6 algarismos de sequência; as da loja têm 7.
+    # Ver issue #8:
+    # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/8
+    @bug-conhecido
+    Cenário: O número da fatura tem o formato das faturas da loja
+      Dado que tenho no carrinho a quantidade 1 de um produto de teste com stock 5
+      Quando compro o carrinho com a morada sugerida para "1000-001" em "PT" e o distrito "Lisboa"
+      Então o número da fatura tem o formato INV-ano-sequência de 7 algarismos
