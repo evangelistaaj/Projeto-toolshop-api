@@ -28,6 +28,9 @@ Funcionalidade: Gestão de produtos
     Quando consulto um produto que não existe
     Então recebo uma resposta com o código 404
 
+  # Bug: a API aceita criar produtos sem login. Ver issue #1:
+  # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1
+  @bug-conhecido
   Cenário: Criar um produto sem login
     Quando crio um produto com os dados:
       | nome  | Martelo de teste |

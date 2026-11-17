@@ -132,6 +132,14 @@ Funcionalidade: Catálogo de produtos
 
 ---
 
+## 🐞 Bugs encontrados
+
+| # | Bug | Severidade | Estado |
+|---|---|---|---|
+| [#1](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1) | `POST /products` cria produtos **sem autenticação**: devolve `201` em vez de `401` | 🔴 Alta (segurança) | Aberto |
+
+Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido`. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`.
+
 ## 🔍 Achados
 
 Diferenças entre a documentação (Swagger) e o comportamento real da API, encontradas ao escrever os testes:
@@ -141,6 +149,8 @@ Diferenças entre a documentação (Swagger) e o comportamento real da API, enco
 | `POST /users/login` | Só a resposta 200 | Também `401` (`{"error": "Unauthorized"}`) para credenciais inválidas | ⚠️ Quem integra não sabe, pela documentação, como a API recusa um login |
 | `POST /users/login` | `token_type: "Bearer"` | `token_type: "bearer"` | 🟡 Inconsistência sem efeito: o esquema não distingue maiúsculas |
 | `POST /users/login` | `expires_in: 120` (exemplo) | `expires_in: 300` (5 minutos) | ℹ️ A duração real do token não está documentada |
+| `POST /products` | Sucesso: `200` | Sucesso: `201 Created` | 🟡 O real segue a convenção REST; a documentação está errada |
+| `POST /products`, `PUT` e `PATCH /products/{id}` | Sem autenticação exigida (só o `DELETE` está protegido) | O `POST` aceita mesmo pedidos sem login (ver bug [#1](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1)) | 🔴 Documentação e implementação concordam, mas na direção errada |
 
 ### 💡 Próximos passos
 

@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "cucumber-js"
+    "test": "cucumber-js",
+    "test:bugs": "cucumber-js -p bugs"
   },
   "keywords": [],
   "author": "",
