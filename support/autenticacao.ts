@@ -10,3 +10,8 @@ export async function fazerLogin(mundo: MundoToolshop, email: string, password: 
     mundo.emailLogin = email;
   }
 }
+
+// Cabeçalhos de um pedido: com token, se houver sessão; vazios, se não houver.
+export function cabecalhosDeAutenticacao(mundo: MundoToolshop): Record<string, string> {
+  return mundo.token ? { Authorization: `Bearer ${mundo.token}` } : {};
+}

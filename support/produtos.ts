@@ -1,0 +1,59 @@
+import type { APIRequestContext } from '@playwright/test';
+import { contaAdmin } from './contas';
+
+export type DadosProduto = {
+  name: string;
+  description: string;
+  price: number;
+  category_id: string;
+  brand_id: string;
+  product_image_id: string;
+  is_location_offer: boolean;
+  is_rental: boolean;
+  co2_rating: string;
+};
+
+// Vai buscar o primeiro elemento de uma lista da API (categorias, marcas, imagens).
+async function primeiroId(api: APIRequestContext, caminho: string): Promise<string> {
+  const resposta = await api.get(caminho);
+  if (!resposta.ok()) {
+    throw new Error(`Não foi possível obter ${caminho} (HTTP ${resposta.status()})`);
+  }
+  const lista = await resposta.json();
+  return lista[0].id;
+}
+
+// Dados válidos para criar um produto. Os ids vêm da API, porque mudam
+// sempre que se repõem os dados. Os campos do cenário substituem os de omissão.
+export async function dadosDeProdutoValidos(
+  api: APIRequestContext,
+  alteracoes: Partial<DadosProduto> = {},
+): Promise<DadosProduto> {
+  return {
+    name: `Produto de teste ${Date.now()}`,
+    description: 'Produto criado por um teste automatizado.',
+    price: 9.99,
+    category_id: await primeiroId(api, '/categories'),
+    brand_id: await primeiroId(api, '/brands'),
+    product_image_id: await primeiroId(api, '/images'),
+    is_location_offer: false,
+    is_rental: false,
+    co2_rating: 'A',
+    ...alteracoes,
+  };
+}
+
+// Limpeza: apaga os produtos criados num cenário. Faz o seu próprio login de
+// administrador, para funcionar mesmo que o cenário não tenha sessão iniciada.
+export async function apagarProdutos(api: APIRequestContext, ids: string[]) {
+  const login = await api.post('/users/login', { data: contaAdmin });
+  const { access_token } = await login.json();
+  for (const id of ids) {
+    const resposta = await api.delete(`/products/${id}`, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    if (resposta.status() !== 204 && resposta.status() !== 404) {
+      console.warn(`Limpeza: não foi possível apagar o produto ${id} (HTTP ${resposta.status()})`);
+    }
+  }
+}

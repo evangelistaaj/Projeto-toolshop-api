@@ -1,6 +1,7 @@
 import { Before, After } from '@cucumber/cucumber';
 import { request } from '@playwright/test';
 import type { MundoToolshop } from './world';
+import { apagarProdutos } from './produtos';
 
 // Endereço da API: por omissão a Toolshop local; pode ser trocado
 // com a variável de ambiente API_URL.
@@ -11,5 +12,9 @@ Before(async function (this: MundoToolshop) {
 });
 
 After(async function (this: MundoToolshop) {
-    await this.api?.dispose();
+  // Limpeza: apaga o que o cenário criou, antes de fechar o cliente HTTP.
+  if (this.api && this.produtosCriados.length > 0) {
+    await apagarProdutos(this.api, this.produtosCriados);
+  }
+  await this.api?.dispose();
 });

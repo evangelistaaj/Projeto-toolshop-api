@@ -1,5 +1,6 @@
 import { World, setWorldConstructor } from '@cucumber/cucumber';
 import type { APIRequestContext, APIResponse } from '@playwright/test';
+import type { DadosProduto } from './produtos';
 
 // O "mundo" de cada cenário: o Cucumber cria um novo por cenário
 // e entrega-o aos passos e hooks como `this`.
@@ -16,6 +17,16 @@ export class MundoToolshop extends World {
 
   // Email com que se fez login, para comparar com os dados da conta.
   emailLogin?: string;
+
+  // Dados enviados na criação de um produto, para comparar com o que fica gravado.
+  dadosEnviados?: DadosProduto;
+
+  // Id do último produto criado no cenário.
+  produtoId?: string;
+
+  // Todos os produtos criados no cenário, para o hook After os apagar.
+  produtosCriados: string[] = [];
+
 }
 
 setWorldConstructor(MundoToolshop);
