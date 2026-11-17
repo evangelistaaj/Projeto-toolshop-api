@@ -31,9 +31,9 @@ Funcionalidade: Pesquisa de morada por código postal
       | FR   | 75001         |
       | GB   | SW1A 1AA      |
 
-  # Bug: a pesquisa devolve o distrito vazio para estes países, e o distrito
-  # é obrigatório na fatura. Ver issue #2:
-  # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/2
+  # Bug: a pesquisa inventa uma morada americana para um país que não existe.
+  # Ver issue #3:
+  # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3
   @bug-conhecido
   Cenário: Pesquisar a morada num país que não existe
     Quando pesquiso a morada do código postal "123" em "XX"
