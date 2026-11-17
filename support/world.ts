@@ -34,6 +34,9 @@ export class MundoToolshop extends World {
   // Todos os carrinhos criados no cenário, para o hook After os apagar.
   carrinhosCriados: string[] = [];
 
+  // Código postal da última pesquisa de morada, para comparar com a resposta.
+  codigoPostalPesquisado?: string;
+
 }
 
 setWorldConstructor(MundoToolshop);

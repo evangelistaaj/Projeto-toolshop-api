@@ -117,7 +117,9 @@ Funcionalidade: Catálogo de produtos
 
 | Cenários | Automatizados ✅ | Bugs conhecidos 🐞 | Pendentes |
 |---|---|---|---|
-| 17 | 16 | 1 | 0 |
+| 26 | 19 | 7 | 0 |
+
+> Os esquemas de cenário contam uma vez por exemplo.
 
 **O que já é verificado**
 
@@ -138,6 +140,11 @@ Funcionalidade: Catálogo de produtos
 | Carrinho | Alterar a quantidade de um produto | Código 200; o carrinho mostra a quantidade nova |
 | Carrinho | Remover um produto | Código 204; o carrinho fica vazio |
 | Carrinho | Juntar um produto que não existe | Código 422 |
+| Pesquisa de morada | Morada completa para DE, ES e BR | Código 200; rua, cidade e distrito preenchidos; país e código postal iguais aos pesquisados |
+| Pesquisa de morada 🐞 | Morada completa para PT, FR e GB | O mesmo oráculo — **falha: distrito vazio** (bug [#2](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/2)) |
+| Pesquisa de morada 🐞 | País que não existe (XX) | Código 422 — **falha: devolve 200 com uma morada americana** (bug [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3)) |
+| Pesquisa de morada 🐞 | Código postal português com formato inválido (`1000`) | Código 422 — **falha: devolve 200** (bug [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3)) |
+| Pesquisa de morada 🐞 | Argentina | O distrito é uma das 24 províncias argentinas (sem distinguir acentos nem maiúsculas) — **falha: devolve "Illinois"** (bug [#4](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/4)) |
 
 > 🧹 Os cenários que criam produtos ou carrinhos apagam-nos no fim (hook `After`), por isso a base de dados fica como estava. Correm só na Toolshop local (tag `@so-local`).
 
@@ -161,6 +168,9 @@ Funcionalidade: Catálogo de produtos
 | # | Bug | Severidade | Estado |
 |---|---|---|---|
 | [#1](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1) | `POST /products` cria produtos **sem autenticação**: devolve `201` em vez de `401` | 🔴 Alta (segurança) | Aberto |
+| [#2](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/2) | `GET /postcode-lookup` devolve o **distrito vazio** para PT, FR e GB, e o distrito é obrigatório na fatura | 🟠 Média (impede compras com a morada sugerida) | Aberto |
+| [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3) | `GET /postcode-lookup` **aceita entradas inválidas** (país inexistente, código postal com formato errado) e inventa uma morada | 🟠 Média | Aberto |
+| [#4](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/4) | `GET /postcode-lookup` devolve **estados dos EUA** para moradas argentinas | 🟠 Média | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido`. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`.
 
