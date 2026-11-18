@@ -6,9 +6,12 @@ const comum = {
 };
 
 module.exports = {
-  // Execução normal: exclui os cenários que reproduzem bugs ainda por corrigir.
-  default: { ...comum, tags: 'not @bug-conhecido' },
+  // Execução normal: rápida, sem bugs conhecidos nem cenários lentos.
+  default: { ...comum, tags: 'not @bug-conhecido and not @lento' },
 
   // Só os bugs conhecidos: para ver se já foram corrigidos.
   bugs: { ...comum, tags: '@bug-conhecido' },
+
+  // Só os cenários lentos (esperam por processos em segundo plano).
+  lento: { ...comum, tags: '@lento and not @bug-conhecido' },
 };

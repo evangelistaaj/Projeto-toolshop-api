@@ -9,7 +9,7 @@ Funcionalidade: Gestão de produtos
     Dado que fiz login com a conta de administrador
     Quando crio um produto com os dados:
       | nome  | Martelo de carpinteiro |
-      | preço |                  12.50 |
+      | preço | 12.50                  |
     Então o produto fica disponível no catálogo com esses dados
 
   Cenário: Alterar o preço de um produto
@@ -27,12 +27,13 @@ Funcionalidade: Gestão de produtos
   Cenário: Consultar um produto que não existe
     Quando consulto um produto que não existe
     Então recebo uma resposta com o código 404
-  # Bug: a API aceita criar produtos sem login. Ver issue #1:
-  # https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1
 
-  @bug-conhecido
+  @bug-conhecido @issue-1
   Cenário: Criar um produto sem login
+    Bug: a API aceita criar produtos sem login.
+    https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1
+
     Quando crio um produto com os dados:
       | nome  | Martelo de carpinteiro |
-      | preço |                  12.50 |
+      | preço | 12.50                  |
     Então recebo uma resposta com o código 401

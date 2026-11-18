@@ -19,6 +19,10 @@ async function criarProdutoParaOCenario(mundo: MundoToolshop, stock: number) {
     expect(criacao.status(), await corpoSeguro(criacao)).toBe(201);
     mundo.produtoId = (await criacao.json()).id;
     mundo.produtosCriados.push(mundo.produtoId!);
+
+    // O produto tem de começar disponível: sem isto, "fica esgotado" passaria sem provar nada.
+    const consulta = await mundo.api.get(`/products/${mundo.produtoId}`);
+    expect((await consulta.json()).in_stock, 'o produto acabado de criar devia estar disponível').toBe(stock > 0);
 }
 
 // Cria um carrinho novo com o produto do cenário, na quantidade pedida.
@@ -242,3 +246,66 @@ Then('o número da fatura tem o formato INV-ano-sequência de {int} algarismos',
         );
     },
 );
+
+// ---------- Stock ----------
+
+// Disponibilidade real do produto, lida sem cache. O GET /products/{id} guarda a
+// resposta em cache durante 5 minutos (ProductService::CACHE_TTL, na Toolshop), e a
+// cache não é limpa quando a fila desconta o stock. O carrinho da compra, que
+// continua a existir depois dela, carrega o produto diretamente da base de dados.
+async function disponibilidadeReal(mundo: MundoToolshop): Promise<boolean> {
+    const consulta = await mundo.api.get(`/carts/${mundo.carrinhoId}`);
+    expect(consulta.status(), await corpoSeguro(consulta)).toBe(200);
+    const linha = (await consulta.json()).cart_items.find(
+        (l: { product_id: string }) => l.product_id === mundo.produtoId,
+    );
+    if (!linha) {
+        throw new Error('O produto já não está no carrinho da compra: não há onde ler o stock real.');
+    }
+    return linha.product.in_stock;
+}
+
+Then('o produto fica esgotado', { timeout: 120_000 }, async function (this: MundoToolshop) {
+    // A compra tem de ter sido aceite; senão, nada foi descontado.
+    expect(this.resposta!.status(), await corpoSeguro(this.resposta!)).toBe(201);
+
+    // O stock é descontado pelo agendador (uma vez por minuto): repetimos a
+    // verificação até o resultado aparecer, sem esperas fixas.
+    await expect
+        .poll(() => disponibilidadeReal(this), {
+            message: 'o produto devia ficar esgotado até 90 s depois da compra',
+            timeout: 90_000,
+            intervals: [5_000],
+        })
+        .toBe(false);
+});
+
+Then('o catálogo mostra o produto esgotado', async function (this: MundoToolshop) {
+    // O passo anterior garantiu que o stock real já acabou: o catálogo tem de concordar.
+    const consulta = await this.api.get(`/products/${this.produtoId}`);
+    expect(consulta.status(), await corpoSeguro(consulta)).toBe(200);
+    expect((await consulta.json()).in_stock, 'o catálogo devia mostrar o produto esgotado, como o stock real').toBe(false);
+});
+
+Given('que existe um produto com stock {int}', async function (this: MundoToolshop, stock: number) {
+    await criarProdutoParaOCenario(this, stock);
+});
+
+When('junto esse produto a um carrinho novo', async function (this: MundoToolshop) {
+    const carrinho = await this.api.post('/carts');
+    expect(carrinho.status(), await corpoSeguro(carrinho)).toBe(201);
+    this.carrinhoId = (await carrinho.json()).id;
+    this.carrinhosCriados.push(this.carrinhoId!);
+
+    this.resposta = await this.api.post(`/carts/${this.carrinhoId}`, {
+        data: { product_id: this.produtoId, quantity: 1 },
+    });
+});
+
+Then('o produto não é aceite no carrinho', async function (this: MundoToolshop) {
+    // Fonte: o Swagger documenta 422 para o POST /carts/{id}, como nos outros erros de validação.
+    expect(this.resposta!.status(), await corpoSeguro(this.resposta!)).toBe(422);
+
+    const consulta = await this.api.get(`/carts/${this.carrinhoId}`);
+    expect((await consulta.json()).cart_items, 'o carrinho devia continuar vazio').toEqual([]);
+});
