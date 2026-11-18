@@ -23,3 +23,40 @@ Then('a fatura tem um desconto ecológico de {int}%', async function (this: Mund
 Then('a fatura não tem desconto ecológico', async function (this: MundoToolshop) {
   await verificarDescontoEcologico(this, 0);
 });
+
+// Valores de dinheiro da fatura que têm de bater certo.
+const VALORES = ['subtotal', 'eco_discount_percentage', 'eco_discount_amount', 'total'] as const;
+
+// Um valor de dinheiro em cêntimos (inteiro), para comparar sem erros de vírgula flutuante.
+function centimos(valor: unknown): number {
+  return Math.round(Number(valor ?? 0) * 100);
+}
+
+Then('a fatura devolvida na compra tem os mesmos valores da fatura guardada', async function (this: MundoToolshop) {
+  const guardada = await faturaDaCompra(this);
+  const devolvida = await this.resposta!.json();
+
+  // Comparação exata dos valores tal como vêm: o cliente que mostra a resposta
+  // da compra tem de mostrar o mesmo que a fatura consultada depois.
+  const valores = (fatura: Record<string, unknown>) =>
+    Object.fromEntries(VALORES.map((campo) => [campo, Number(fatura[campo] ?? 0)]));
+  expect(valores(devolvida), 'valores da resposta da compra = valores da fatura guardada').toEqual(valores(guardada));
+});
+
+Then('o total da fatura é o subtotal menos os descontos, ao cêntimo', async function (this: MundoToolshop) {
+  const fatura = await faturaDaCompra(this);
+
+  // Pré-condição: o subtotal é a soma do carrinho e há desconto ecológico,
+  // senão o cenário não testa o arredondamento.
+  expect(centimos(fatura.subtotal), 'subtotal = soma de preço × quantidade').toBe(
+    centimos(subtotalDoCarrinho(this)),
+  );
+  expect(centimos(fatura.eco_discount_amount), 'a fatura devia ter desconto ecológico').toBeGreaterThan(0);
+
+  const esperado =
+    centimos(fatura.subtotal) - centimos(fatura.additional_discount_amount) - centimos(fatura.eco_discount_amount);
+  expect(
+    centimos(fatura.total),
+    `total (${fatura.total}) = subtotal (${fatura.subtotal}) − descontos (${fatura.additional_discount_amount ?? 0} + ${fatura.eco_discount_amount})`,
+  ).toBe(esperado);
+});
