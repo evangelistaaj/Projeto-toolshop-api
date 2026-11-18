@@ -70,7 +70,17 @@ npm test
 | `npm run test:limpo` | Repõe os dados da Toolshop local e corre `npm test` |
 | `npx cucumber-js --tags @issue-5` | Só os cenários de um bug (cada um tem a tag do seu issue) |
 
-> 📧 Na Toolshop local arrancada com o `docker-compose.prod.yml`, os emails de confirmação de compra **não são enviados**: o servidor de email de testes (`mailcatcher`) não faz parte desse ficheiro, e os trabalhos `SendCheckoutEmail` acabam na tabela de trabalhos falhados. É uma questão do ambiente, não da aplicação.
+### 📧 Servidor de email de testes
+
+Os cenários do email de confirmação (`features/email.feature`) leem os emails num servidor de email de testes, o [MailCatcher](https://mailcatcher.me), que recebe os emails da Toolshop sem os enviar a ninguém. O `docker-compose.prod.yml` da Toolshop não o inclui, por isso arranca-se à parte, na mesma rede Docker e com o nome que a API espera (`mailcatcher`):
+
+```powershell
+docker run -d --name pst-mailcatcher --restart unless-stopped --network pst_default --network-alias mailcatcher -p 1025:1025 -p 1080:1080 dockage/mailcatcher:0.9.0
+```
+
+Os emails recebidos podem ser vistos no browser em `http://localhost:1080`. Os testes leem-nos pela API do MailCatcher, nesse mesmo endereço; para usar outro, define a variável `MAIL_URL`.
+
+> ℹ️ Sem o MailCatcher, os emails não são enviados e os trabalhos `SendCheckoutEmail` acabam na tabela de trabalhos falhados (é uma questão do ambiente, não da aplicação). Depois de o arrancar, `docker exec pst-laravel-api-1 php artisan queue:retry all` volta a enviá-los.
 
 ### 🧹 Repor os dados
 
@@ -103,6 +113,7 @@ features/    Cenários em Gherkin (português)
 steps/       Definições dos passos, um ficheiro por funcionalidade
 support/     World (estado de cada cenário), hooks (preparação e limpeza),
              contas de teste e proteção de dados sensíveis
+             (incluindo o carrinho com vários produtos e a consulta da fatura)
 cucumber.js  Configuração do Cucumber
 .vscode/     Configuração da extensão Cucumber do VS Code (navegação e autocompletar dos passos)
 ```
@@ -129,9 +140,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 41 | 25 | 16 | 0 | 10 |
+| 51 | 33 | 18 | 0 | 12 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 16 execuções a vermelho correspondem a **10 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) e #10 (1).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 18 execuções a vermelho correspondem a **12 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1) e #12 (1).
 
 **O que já é verificado**
 
@@ -172,8 +183,22 @@ Funcionalidade: Catálogo de produtos
 | Stock ⏳🐞 | O catálogo mostra o produto esgotado quando o stock acaba | Depois de o stock real acabar, o `GET /products/{id}` concorda — **falha: mostra "disponível" até 5 min** (bug [#10](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/10)) |
 | Stock 🐞 | Comprar mais unidades do que o stock disponível é recusado | Código 422; nenhuma fatura — **falha: a compra é aceite** (bug [#9](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/9)) |
 | Stock 🐞 | Juntar ao carrinho um produto esgotado é recusado | Código 422; o carrinho fica vazio — **falha: o produto é aceite** (bug [#9](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/9)) |
+| Desconto ecológico | Só produtos ecológicos (A e B) | Desconto de 5%: subtotal = soma de preço × quantidade; valor do desconto = 5% do subtotal; total = subtotal − desconto |
+| Desconto ecológico | Sem produtos ecológicos (D e E) | Sem desconto; total = subtotal |
+| Desconto ecológico | Maioria das unidades ecológicas (2 de 3) | Desconto de 5% |
+| Desconto ecológico | Exatamente metade das unidades ecológicas (limite) | Sem desconto: a regra pede **mais** de metade |
+| Desconto ecológico | 3 unidades ecológicas num só produto contra 2 produtos não ecológicos | Desconto de 5%: a regra conta **unidades**, não produtos |
+| Desconto ecológico | Classificação B | Conta como ecológica: desconto de 5% |
+| Desconto ecológico | Classificação C | Não conta como ecológica: sem desconto |
+| Email de confirmação ⏳ | Todos os produtos e o total da fatura | O email chega (até 90 s); tem uma linha `<quantidade> x <nome>` por produto; o `Total` do email é o total da fatura |
+| Email de confirmação ⏳🐞 | O email mostra o desconto ecológico | Linha `Eco-Friendly Discount (5%): -$ …` com a percentagem e o valor da fatura — **falha: a linha não aparece** (bug [#11](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/11)) |
+| Email de confirmação ⏳🐞 | O email indica o número da fatura | O email contém o `invoice_number` — **falha: não o indica** (bug [#12](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/12)) |
 
 > ⏳ O stock é descontado em segundo plano, por um agendador que corre uma vez por minuto. Os cenários lentos **repetem a verificação** de 5 em 5 segundos até o resultado aparecer (no máximo 90 s), sem esperas fixas. Antes de cada compra, confirma-se que o produto começa disponível: sem isso, "fica esgotado" passaria sem provar nada.
+
+> 🌱 A regra do desconto ecológico não está documentada: veio do código-fonte da Toolshop (`InvoiceService`). Os cenários testam as partições (só ecológicos, nenhum, maioria) e os limites (exatamente metade; B conta, C não), cada um com produtos e preços criados pelo próprio cenário, para que as contas não dependam dos dados iniciais.
+
+> 📧 Para encontrar o email certo entre os de todas as execuções, cada produto criado pelos testes tem um nome único; o email da compra é o que menciona todos os produtos do cenário.
 
 > 🎯 Os oráculos da numeração dependem só das faturas que o próprio cenário cria. Comparar com as faturas já existentes daria resultados diferentes conforme o número de execuções anteriores (a sequência das faturas novas vai subindo a cada compra).
 
@@ -190,7 +215,9 @@ Funcionalidade: Catálogo de produtos
 - [x] CRUD de produtos
 - [x] Carrinho
 - [x] Testes para os problemas encontrados na API (faturas e stock)
-- [ ] Email de confirmação da compra (servidor de email de testes) *(a seguir)*
+- [x] Carrinho com vários produtos e desconto ecológico
+- [x] Email de confirmação da compra (servidor de email de testes)
+- [ ] Métodos de pagamento *(a seguir)*
 - [ ] Massa de teste em ficheiros JSON (moradas e produtos com nomes de negócio)
 - [ ] Relatórios e integração contínua
 
@@ -210,6 +237,8 @@ Funcionalidade: Catálogo de produtos
 | [#8](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/8) | `POST /invoices`: as faturas novas têm **um algarismo a menos** na sequência e a numeração **recomeça** abaixo das existentes (risco de números repetidos) | 🔴 Alta (documentos fiscais com números repetidos) | Aberto |
 | [#9](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/9) | A API **não verifica o stock**: aceita comprar mais unidades do que existem e juntar produtos esgotados ao carrinho | 🔴 Alta (vende o que não existe) | Aberto |
 | [#10](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/10) | `GET /products/{id}` mostra **stock desatualizado** até 5 minutos: a cache não é limpa quando o stock acaba | 🟠 Média (agrava o #9) | Aberto |
+| [#11](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/11) | Email de confirmação **não mostra o desconto ecológico**, embora o total já o tenha descontado: as linhas não batem com o total | 🟡 Baixa (confunde o cliente) | Aberto |
+| [#12](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/12) | Email de confirmação **não indica o número da fatura** | 🟡 Baixa (usabilidade) | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`.
 
@@ -229,6 +258,8 @@ Diferenças entre a documentação (Swagger) e o comportamento real da API, enco
 | Erros de validação (ex.: `POST /carts/{id}` com quantidade 0) | `422` | `422` só com `Accept: application/json`; com `Accept: */*` a API redireciona para `/`, que devolve `404` | ⚠️ Um cliente que não peça JSON recebe um erro enganador. Os testes enviam sempre `Accept: application/json` |
 | `POST /invoices` (stock) | Não documentado | O stock é descontado **em segundo plano** (fila `UpdateProductInventory` + agendador de minuto a minuto), até cerca de 1 minuto depois da compra | ℹ️ Quem integra tem de contar com este atraso |
 | `POST /products`, `PUT` e `PATCH /products/{id}` | Sem autenticação exigida (só o `DELETE` está protegido) | O `POST` aceita mesmo pedidos sem login (ver bug [#1](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1)) | 🔴 Documentação e implementação concordam, mas na direção errada |
+| Email de confirmação da compra | Não documentado | Enviado em segundo plano (fila `SendCheckoutEmail`), até cerca de 1 minuto depois da compra, com o assunto genérico **"Checkout"** | ℹ️ O assunto não identifica a loja nem a compra |
+| Email de confirmação da compra | Não documentado | **Não indica o método de pagamento** escolhido, nem a morada de faturação | 🟡 O cliente não tem no email o registo de como pagou |
 
 > 🔎 **Da investigação (não coberto por testes):** para o administrador, o `in_stock` devolve o **número** de unidades em stock, e não verdadeiro ou falso como documenta o Swagger. Confirmado no código-fonte da Toolshop (`Product::getInStockAttribute`) e observado uma vez; não foi possível reproduzir de forma consistente (provavelmente por causa da cache do #10).
 

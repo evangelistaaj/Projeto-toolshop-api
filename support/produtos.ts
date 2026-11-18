@@ -32,7 +32,8 @@ export async function dadosDeProdutoValidos(
   alteracoes: Partial<DadosProduto> = {},
 ): Promise<DadosProduto> {
   return {
-    name: `Produto de teste ${Date.now()}`,
+    // Nome único: o email de confirmação é encontrado pelos nomes dos produtos.
+    name: `Produto de teste ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     description: 'Produto criado por um teste automatizado.',
     price: 9.99,
     category_id: await primeiroId(api, '/categories'),

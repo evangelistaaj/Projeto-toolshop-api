@@ -1,17 +1,22 @@
-import { Given, When, Then } from '@cucumber/cucumber';
+import { Given, When, Then, DataTable } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import type { MundoToolshop } from '../support/world';
 import { cabecalhosDeAutenticacao, tokenDeAdministrador } from '../support/autenticacao';
-import { dadosDeProdutoValidos } from '../support/produtos';
+import { dadosDeProdutoValidos, type DadosProduto } from '../support/produtos';
 import { codigoDoPais } from '../support/referencia';
 import { corpoSeguro } from '../support/seguranca';
 
 // ---------- Preparação: produto, carrinho e morada ----------
 
 // Cria, como administrador, um produto só para o cenário, com stock conhecido.
-async function criarProdutoParaOCenario(mundo: MundoToolshop, stock: number) {
+// Outros campos (preço, classificação CO2...) podem ser indicados pelo cenário.
+async function criarProdutoParaOCenario(
+    mundo: MundoToolshop,
+    stock: number,
+    alteracoes: Partial<DadosProduto> = {},
+) {
     const token = await tokenDeAdministrador(mundo.api);
-    mundo.dadosEnviados = await dadosDeProdutoValidos(mundo.api, { stock });
+    mundo.dadosEnviados = await dadosDeProdutoValidos(mundo.api, { ...alteracoes, stock });
     const criacao = await mundo.api.post('/products', {
         data: mundo.dadosEnviados,
         headers: { Authorization: `Bearer ${token}` },
@@ -90,6 +95,31 @@ Given('que tenho no carrinho a quantidade {int} de um produto com stock {int}',
         await criarProdutoParaOCenario(this, stock);
         await novoCarrinhoCom(this, quantidade);
     });
+
+// Um carrinho com vários produtos, um por linha da tabela (quantidade | preço | CO2).
+// Cada produto é criado só para o cenário, com stock suficiente para a quantidade.
+Given('que tenho no carrinho os produtos:', async function (this: MundoToolshop, tabela: DataTable) {
+    this.produtosNoCarrinho = [];
+    for (const linha of tabela.hashes()) {
+        const quantidade = Number(linha['quantidade']);
+        const preco = Number(linha['preço']);
+        const co2 = linha['CO2'];
+        await criarProdutoParaOCenario(this, quantidade + 5, { price: preco, co2_rating: co2 });
+        this.produtosNoCarrinho.push({ id: this.produtoId!, nome: this.dadosEnviados!.name, preco, quantidade, co2 });
+    }
+
+    const carrinho = await this.api.post('/carts');
+    expect(carrinho.status(), await corpoSeguro(carrinho)).toBe(201);
+    this.carrinhoId = (await carrinho.json()).id;
+    this.carrinhosCriados.push(this.carrinhoId!);
+
+    for (const produto of this.produtosNoCarrinho) {
+        const juntar = await this.api.post(`/carts/${this.carrinhoId}`, {
+            data: { product_id: produto.id, quantity: produto.quantidade },
+        });
+        expect(juntar.status(), await corpoSeguro(juntar)).toBe(200);
+    }
+});
 
 Given('que indico a morada sugerida para o código postal {string} de {string}',
     async function (this: MundoToolshop, codigoPostal: string, pais: string) {

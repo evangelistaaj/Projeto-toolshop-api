@@ -45,6 +45,13 @@ export class MundoToolshop extends World {
   // Números das faturas criadas no cenário (para comparar a sequência).
   numerosDasFaturas?: string[];
 
+  // Carrinho com vários produtos: o que se pôs no carrinho, para comparar
+  // com a fatura e com o email de confirmação.
+  produtosNoCarrinho?: { id: string; nome: string; preco: number; quantidade: number; co2: string }[];
+
+  // Texto do email de confirmação da compra, depois de ter chegado.
+  textoDoEmail?: string;
+
 }
 
 setWorldConstructor(MundoToolshop);
