@@ -12,3 +12,25 @@ export const PROVINCIAS_ARGENTINA = [
 export function normalizar(texto: string): string {
   return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
 }
+
+// Países usados nos cenários e o código ISO que a API espera.
+// Os cenários falam em "Portugal"; a API recebe "PT".
+const PAISES: Record<string, string> = {
+  Portugal: 'PT',
+  Alemanha: 'DE',
+  Espanha: 'ES',
+  Brasil: 'BR',
+  'França': 'FR',
+  'Reino Unido': 'GB',
+  Argentina: 'AR',
+};
+
+// Código ISO de um país. Um nome desconhecido faz falhar o teste,
+// em vez de enviar à API um valor inventado.
+export function codigoDoPais(nome: string): string {
+  const codigo = PAISES[nome];
+  if (!codigo) {
+    throw new Error(`O país "${nome}" não tem código definido em support/referencia.ts`);
+  }
+  return codigo;
+}

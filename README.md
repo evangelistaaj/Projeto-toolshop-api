@@ -119,7 +119,7 @@ Funcionalidade: Catálogo de produtos
 |---|---|---|---|---|
 | 37 | 24 | 13 | 0 | 8 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 13 execuções a vermelho correspondem a **8 bugs** — #1 (1 execução), #2 (3: PT, FR e GB), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1) e #8 (1).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 13 execuções a vermelho correspondem a **8 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1) e #8 (1).
 
 **O que já é verificado**
 
@@ -140,9 +140,9 @@ Funcionalidade: Catálogo de produtos
 | Carrinho | Alterar a quantidade de um produto | Código 200; o carrinho mostra a quantidade nova |
 | Carrinho | Remover um produto | Código 204; o carrinho fica vazio |
 | Carrinho | Juntar um produto que não existe | Código 422 |
-| Pesquisa de morada | Morada completa para DE, ES e BR | Código 200; rua, cidade e distrito preenchidos; país e código postal iguais aos pesquisados |
-| Pesquisa de morada 🐞 | Morada completa para PT, FR e GB | O mesmo oráculo — **falha: distrito vazio** (bug [#2](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/2)) |
-| Pesquisa de morada 🐞 | País que não existe (XX) | Código 422 — **falha: devolve 200 com uma morada americana** (bug [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3)) |
+| Pesquisa de morada | Morada completa na Alemanha, em Espanha e no Brasil | Código 200; rua, cidade e distrito preenchidos; país e código postal iguais aos pesquisados |
+| Pesquisa de morada 🐞 | Morada completa em Portugal, em França e no Reino Unido | O mesmo oráculo — **falha: distrito vazio** (bug [#2](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/2)) |
+| Pesquisa de morada 🐞 | País que não existe (código `XX`, reservado pela norma ISO 3166) | Código 422 — **falha: devolve 200 com uma morada americana** (bug [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3)) |
 | Pesquisa de morada 🐞 | Código postal português com formato inválido (`1000`) | Código 422 — **falha: devolve 200** (bug [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3)) |
 | Pesquisa de morada 🐞 | Argentina | O distrito é uma das 24 províncias argentinas (sem distinguir acentos nem maiúsculas) — **falha: devolve "Illinois"** (bug [#4](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/4)) |
 | Faturas | Comprar com a morada sugerida pelo código postal | Código 201; número `INV-…`; a fatura, consultada à parte, tem a morada enviada e uma linha com o produto, a quantidade, o preço unitário e o subtotal certos |
@@ -182,7 +182,7 @@ Funcionalidade: Catálogo de produtos
 | # | Bug | Severidade | Estado |
 |---|---|---|---|
 | [#1](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1) | `POST /products` cria produtos **sem autenticação**: devolve `201` em vez de `401` | 🔴 Alta (segurança) | Aberto |
-| [#2](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/2) | `GET /postcode-lookup` devolve o **distrito vazio** para PT, FR e GB, e o distrito é obrigatório na fatura | 🟠 Média (impede compras com a morada sugerida) | Aberto |
+| [#2](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/2) | `GET /postcode-lookup` devolve o **distrito vazio** para Portugal, França e Reino Unido, e o distrito é obrigatório na fatura | 🟠 Média (impede compras com a morada sugerida) | Aberto |
 | [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3) | `GET /postcode-lookup` **aceita entradas inválidas** (país inexistente, código postal com formato errado) e inventa uma morada | 🟠 Média | Aberto |
 | [#4](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/4) | `GET /postcode-lookup` devolve **estados dos EUA** para moradas argentinas | 🟠 Média | Aberto |
 | [#5](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5) | `POST /invoices` com uma cidade que não corresponde ao código postal: o erro aponta para o **país** e a mensagem engana | 🟠 Média (o cliente não sabe o que corrigir) | Aberto |
