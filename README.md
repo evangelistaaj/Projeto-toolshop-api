@@ -140,9 +140,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 53 | 33 | 20 | 0 | 13 |
+| 57 | 33 | 24 | 0 | 14 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 20 execuções a vermelho correspondem a **13 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1) e #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 24 execuções a vermelho correspondem a **14 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) e #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão).
 
 **O que já é verificado**
 
@@ -195,12 +195,16 @@ Funcionalidade: Catálogo de produtos
 | Email de confirmação ⏳ | Todos os produtos e o total da fatura | O email chega (até 90 s); tem uma linha `<quantidade> x <nome>` por produto; o `Total` do email é o total da fatura |
 | Email de confirmação ⏳🐞 | O email mostra o desconto ecológico | Linha `Eco-Friendly Discount (5%): -$ …` com a percentagem e o valor da fatura — **falha: a linha não aparece** (bug [#11](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/11)) |
 | Email de confirmação ⏳🐞 | O email indica o número da fatura | O email contém o `invoice_number` — **falha: não o indica** (bug [#12](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/12)) |
+| Pagamentos 🐞 | A fatura não mostra o código de segurança do cartão (CVV de 3 e de 4 algarismos) | Compra com cartão de crédito; a fatura tem o pagamento com cartão; nenhum campo com nome de código de segurança (`cvv`, `cvc`, `security_code`), a qualquer profundidade, tem valor — **falha: devolve `payment.payment_details.cvv`** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
+| Pagamentos 🐞 | A fatura não mostra o número completo do cartão (dois números) | O número não aparece em lado nenhum da resposta, nem com hífenes nem só com algarismos (o número mascarado é aceite) — **falha: vem completo** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 
 > ⏳ O stock é descontado em segundo plano, por um agendador que corre uma vez por minuto. Os cenários lentos **repetem a verificação** de 5 em 5 segundos até o resultado aparecer (no máximo 90 s), sem esperas fixas. Antes de cada compra, confirma-se que o produto começa disponível: sem isso, "fica esgotado" passaria sem provar nada.
 
 > 🌱 A regra do desconto ecológico não está documentada: veio do código-fonte da Toolshop (`InvoiceService`). Os cenários testam as partições (só ecológicos, nenhum, maioria) e os limites (exatamente metade; B conta, C não), cada um com produtos e preços criados pelo próprio cenário, para que as contas não dependam dos dados iniciais. Os valores de dinheiro são comparados em **cêntimos inteiros**, para não haver erros de vírgula flutuante, e o subtotal de 10.10 foi escolhido por ser um limite de arredondamento: 5% dá exatamente meio cêntimo (0.505).
 
 > 📧 Para encontrar o email certo entre os de todas as execuções, cada produto criado pelos testes tem um nome único; o email da compra é o que menciona todos os produtos do cenário.
+
+> 💳 Os dados de cartão dos testes são **números de teste inventados** e só correm na Toolshop local. A validade é escrita de forma relativa ("daqui a 2 anos") e calculada a partir da data de hoje, para que os cenários nunca caduquem.
 
 > 🎯 Os oráculos da numeração dependem só das faturas que o próprio cenário cria. Comparar com as faturas já existentes daria resultados diferentes conforme o número de execuções anteriores (a sequência das faturas novas vai subindo a cada compra).
 
@@ -219,7 +223,7 @@ Funcionalidade: Catálogo de produtos
 - [x] Testes para os problemas encontrados na API (faturas e stock)
 - [x] Carrinho com vários produtos e desconto ecológico
 - [x] Email de confirmação da compra (servidor de email de testes)
-- [ ] Métodos de pagamento *(a seguir)*
+- [ ] Métodos de pagamento *(em curso: dados sensíveis do cartão feito; falta o registo de cada método e a validação dos dados)*
 - [ ] Massa de teste em ficheiros JSON (moradas e produtos com nomes de negócio)
 - [ ] Relatórios e integração contínua
 
@@ -242,6 +246,7 @@ Funcionalidade: Catálogo de produtos
 | [#11](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/11) | Email de confirmação **não mostra o desconto ecológico**, embora o total já o tenha descontado: as linhas não batem com o total | 🟡 Baixa (confunde o cliente) | Aberto |
 | [#12](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/12) | Email de confirmação **não indica o número da fatura** | 🟡 Baixa (usabilidade) | Aberto |
 | [#13](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/13) | `POST /invoices` **não arredonda** o desconto ecológico nem o total: a resposta da compra difere da fatura guardada, e a fatura pode falhar **1 cêntimo** nas contas | 🟠 Média (valores de dinheiro incoerentes) | Aberto |
+| [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14) | `GET /invoices/{id}` devolve os **dados do cartão completos, incluindo o CVV**: a API guarda o código de segurança e o número sem mascarar | 🔴 Alta (segurança: exposição de dados de pagamento, contra o PCI DSS) | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`.
 

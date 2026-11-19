@@ -5,6 +5,7 @@ import { cabecalhosDeAutenticacao, tokenDeAdministrador } from '../support/auten
 import { dadosDeProdutoValidos, type DadosProduto } from '../support/produtos';
 import { codigoDoPais } from '../support/referencia';
 import { corpoSeguro } from '../support/seguranca';
+import { comprarCarrinho, moradaIndicada } from '../support/faturas';
 
 // ---------- Preparação: produto, carrinho e morada ----------
 
@@ -59,35 +60,6 @@ async function moradaSugeridaParaFatura(mundo: MundoToolshop, codigoPostal: stri
         billing_country: pais,
         billing_postal_code: codigoPostal,
     };
-}
-
-// A morada que o cliente está a preencher no cenário.
-function moradaIndicada(mundo: MundoToolshop): Record<string, string> {
-    if (!mundo.moradaDaFatura) {
-        throw new Error('Este passo precisa de uma morada antes ("que indico a morada sugerida para o código postal ...").');
-    }
-    return mundo.moradaDaFatura;
-}
-
-// Compra o carrinho do cenário com a morada indicada.
-async function comprarCarrinho(mundo: MundoToolshop, morada: Record<string, string>) {
-    if (!mundo.carrinhoId) {
-        throw new Error('Este passo precisa de um carrinho com produtos antes.');
-    }
-    mundo.moradaDaFatura = morada;
-    mundo.resposta = await mundo.api.post('/invoices', {
-        headers: cabecalhosDeAutenticacao(mundo),
-        data: {
-            ...morada,
-            // Pagamento na entrega: não precisa de detalhes, e o pagamento não é o que estamos a testar.
-            payment_method: 'cash-on-delivery',
-            payment_details: {},
-            cart_id: mundo.carrinhoId,
-        },
-    });
-    if (mundo.resposta.ok()) {
-        mundo.faturaId = (await mundo.resposta.json()).id;
-    }
 }
 
 Given('que tenho no carrinho a quantidade {int} de um produto com stock {int}',

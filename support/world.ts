@@ -52,6 +52,9 @@ export class MundoToolshop extends World {
   // Texto do email de confirmação da compra, depois de ter chegado.
   textoDoEmail?: string;
 
+  // Dados do cartão com que se pagou a compra, para comparar com a fatura.
+  cartaoDaCompra?: { numero: string; cvv: string };
+
 }
 
 setWorldConstructor(MundoToolshop);

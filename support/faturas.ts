@@ -24,3 +24,42 @@ export function subtotalDoCarrinho(mundo: MundoToolshop): number {
   }
   return mundo.produtosNoCarrinho.reduce((soma, p) => soma + p.preco * p.quantidade, 0);
 }
+
+// Um pagamento: o método e os dados que esse método pede.
+export type Pagamento = { metodo: string; detalhes: Record<string, unknown> };
+
+// Pagamento na entrega: não precisa de dados. É o que usam os cenários
+// em que o pagamento não é o que está a ser testado.
+const CONTRA_REEMBOLSO: Pagamento = { metodo: 'cash-on-delivery', detalhes: {} };
+
+// A morada que o cliente está a preencher no cenário.
+export function moradaIndicada(mundo: MundoToolshop): Record<string, string> {
+  if (!mundo.moradaDaFatura) {
+    throw new Error('Este passo precisa de uma morada antes ("que indico a morada sugerida para o código postal ...").');
+  }
+  return mundo.moradaDaFatura;
+}
+
+// Compra o carrinho do cenário com a morada e o pagamento indicados.
+export async function comprarCarrinho(
+  mundo: MundoToolshop,
+  morada: Record<string, string>,
+  pagamento: Pagamento = CONTRA_REEMBOLSO,
+) {
+  if (!mundo.carrinhoId) {
+    throw new Error('Este passo precisa de um carrinho com produtos antes.');
+  }
+  mundo.moradaDaFatura = morada;
+  mundo.resposta = await mundo.api.post('/invoices', {
+    headers: cabecalhosDeAutenticacao(mundo),
+    data: {
+      ...morada,
+      payment_method: pagamento.metodo,
+      payment_details: pagamento.detalhes,
+      cart_id: mundo.carrinhoId,
+    },
+  });
+  if (mundo.resposta.ok()) {
+    mundo.faturaId = (await mundo.resposta.json()).id;
+  }
+}
