@@ -65,7 +65,7 @@ npm test
 | Comando | O que corre |
 |---|---|
 | `npm test` | Todos os cenários, exceto os que reproduzem bugs conhecidos e os lentos (alguns segundos) |
-| `npm run test:lento` | Só os cenários lentos (`@lento`): esperam por processos em segundo plano, até 90 s cada |
+| `npm run test:lento` | Só os cenários lentos (`@lento`), que esperam por processos em segundo plano (até 90 s cada). Arranca antes um processador da fila da Toolshop só para o teste |
 | `npm run test:bugs` | Só os cenários que reproduzem bugs conhecidos (`@bug-conhecido`) |
 | `npm run test:limpo` | Repõe os dados da Toolshop local e corre `npm test` |
 | `npx cucumber-js --tags @issue-5` | Só os cenários de um bug (cada um tem a tag do seu issue) |
@@ -221,6 +221,10 @@ Funcionalidade: Catálogo de produtos
 | Pagamentos 🐞 | A fatura não mostra o número completo do cartão (dois números) | O número não aparece em lado nenhum da resposta, nem com hífenes nem só com algarismos (o número mascarado é aceite) — **falha: vem completo** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 
 > ⏳ O stock é descontado em segundo plano, por um agendador que corre uma vez por minuto. Os cenários lentos **repetem a verificação** de 5 em 5 segundos até o resultado aparecer (no máximo 90 s), sem esperas fixas. Antes de cada compra, confirma-se que o produto começa disponível: sem isso, "fica esgotado" passaria sem provar nada.
+
+> 🚦 Na Toolshop, os trabalhos em segundo plano (desconto de stock, email) são processados pelo agendador, que arranca o processador da fila uma vez por minuto. Às vezes esse processador fica ocupado mais de um minuto (por exemplo, a gerar os PDF das faturas que a Toolshop cria sozinha), e os minutos seguintes são saltados: uma compra podia esperar mais de 90 s, e o cenário falhava sem a API ter um bug. Confirmado com um processador próprio a correr durante o teste: os trabalhos da compra foram processados em milissegundos, logo a seguir à compra.
+>
+> Por isso, o `npm run test:lento` arranca primeiro **o seu próprio processador da fila**, em segundo plano (`docker exec -d ... php artisan queue:work --max-time=300`), que se desliga sozinho ao fim de 5 minutos. O código que desconta o stock e envia o email continua a ser o da Toolshop; os cenários deixam só de depender do horário do agendador. O limite de 90 s mantém-se.
 
 > 🌱 A regra do desconto ecológico não está documentada: veio do código-fonte da Toolshop (`InvoiceService`). Os cenários testam as partições (só ecológicos, nenhum, maioria) e os limites (exatamente metade; B conta, C não), cada um com produtos e preços criados pelo próprio cenário, para que as contas não dependam dos dados iniciais. Os valores de dinheiro são comparados em **cêntimos inteiros**, para não haver erros de vírgula flutuante, e o subtotal de 10.10 foi escolhido por ser um limite de arredondamento: 5% dá exatamente meio cêntimo (0.505).
 
