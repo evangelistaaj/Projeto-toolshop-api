@@ -5,13 +5,13 @@ import { contaCliente, contaAdmin } from '../support/contas';
 import { fazerLogin } from '../support/autenticacao';
 import { corpoSeguro } from '../support/seguranca';
 
-Given('que fiz login com a conta de administrador',
+Given('que fiz login como administrador',
     async function (this: MundoToolshop) {
         await fazerLogin(this, contaAdmin.email, contaAdmin.password);
         expect(this.resposta!.status(), await corpoSeguro(this.resposta!)).toBe(200);
     });
 
-When('faço login com a conta de cliente de demonstração',
+When('faço login como cliente',
     async function (this: MundoToolshop) {
         await fazerLogin(this, contaCliente.email, contaCliente.password);
     });
@@ -45,7 +45,7 @@ Then('recebo um token de acesso válido',
     });
 
 
-Given('que fiz login com a conta de cliente de demonstração',
+Given('que fiz login como cliente',
     async function (this: MundoToolshop) {
         await fazerLogin(this, contaCliente.email, contaCliente.password);
         // É uma pré-condição: se o login falhar, o cenário pára aqui, com a causa.

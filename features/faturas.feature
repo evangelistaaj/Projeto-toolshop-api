@@ -11,7 +11,7 @@ Funcionalidade: Compra com fatura
   por isso o cliente tem de o indicar.
 
   Contexto:
-    Dado que fiz login com a conta de cliente de demonstração
+    Dado que fiz login como cliente
 
   Cenário: Comprar com a morada sugerida pelo código postal
     Dado que tenho no carrinho a quantidade 2 de um produto com stock 5

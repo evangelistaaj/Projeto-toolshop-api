@@ -11,7 +11,7 @@ Funcionalidade: Desconto ecológico
   de produtos ecológicos.
 
   Contexto:
-    Dado que fiz login com a conta de cliente de demonstração
+    Dado que fiz login como cliente
     E que indico a morada sugerida para o código postal "1000-001" de "Portugal"
     E que indico o distrito "Lisboa"
 

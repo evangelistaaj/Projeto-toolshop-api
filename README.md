@@ -95,7 +95,7 @@ Cada teste cria e apaga os seus próprios dados, por isso os testes passam com o
 
 ### 🔑 Contas de teste
 
-Os testes usam a conta de cliente de demonstração criada pelos dados iniciais da Toolshop (`customer2@practicesoftwaretesting.com`). São credenciais públicas de uma aplicação de treino, definidas em `support/contas.ts`, e podem ser trocadas sem mexer no código:
+Os testes usam a conta de cliente criada pelos dados iniciais da Toolshop (`customer2@practicesoftwaretesting.com`). São credenciais públicas de uma aplicação de treino, definidas em `support/contas.ts`, e podem ser trocadas sem mexer no código:
 
 | Variável | Para que serve |
 |---|---|
@@ -114,9 +114,23 @@ steps/       Definições dos passos, um ficheiro por funcionalidade
 support/     World (estado de cada cenário), hooks (preparação e limpeza),
              contas de teste e proteção de dados sensíveis
              (incluindo o carrinho com vários produtos e a consulta da fatura)
+dados/       Massa de teste em JSON: produtos, países, províncias e pagamentos
 cucumber.js  Configuração do Cucumber
 .vscode/     Configuração da extensão Cucumber do VS Code (navegação e autocompletar dos passos)
 ```
+
+### 🧪 Massa de teste
+
+Os dados de fundo dos cenários vivem em ficheiros JSON, na pasta `dados/`, separados do código:
+
+| Ficheiro | Conteúdo |
+|---|---|
+| `produtos.json` | Produtos do catálogo com nomes e descrições de negócio, em inglês como o resto da Toolshop. Cada produto criado por um cenário recebe uma referência única no nome (ex.: `Claw Hammer with Fiberglass Handle - ref. MHO7X2K9A3F`) |
+| `paises.json` | Os países dos cenários ("Portugal") e o código ISO que a API espera (`PT`) |
+| `provincias-argentina.json` | As 24 províncias argentinas, para verificar a pesquisa de morada |
+| `pagamentos.json` | Dados válidos de cada método de pagamento, com os nomes dos campos em português, iguais aos do Gherkin |
+
+Os dados que são o **tema** de um cenário (por exemplo, o código postal pesquisado ou um cartão inválido) ficam no próprio `.feature`, à vista de quem o lê. Para os ficheiros JSON vão só os dados de fundo. Um nome que não esteja na massa de teste (um país, um campo de pagamento) faz o teste falhar com uma mensagem clara, em vez de enviar à API um valor inventado.
 
 ---
 
@@ -232,7 +246,7 @@ Funcionalidade: Catálogo de produtos
 - [x] Carrinho com vários produtos e desconto ecológico
 - [x] Email de confirmação da compra (servidor de email de testes)
 - [x] Métodos de pagamento (registo de cada método, verificação dos dados, compra com dados inválidos e dados sensíveis do cartão)
-- [ ] Massa de teste em ficheiros JSON (moradas e produtos com nomes de negócio)
+- [x] Massa de teste em ficheiros JSON (produtos com nomes de negócio, países, províncias e pagamentos)
 - [ ] Relatórios e integração contínua
 
 ---

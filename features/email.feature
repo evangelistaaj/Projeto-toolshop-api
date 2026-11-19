@@ -5,12 +5,10 @@ Funcionalidade: Email de confirmação da compra
   Quero receber um email com o resumo da minha compra
   Para ter um registo do que comprei e de quanto paguei
 
-  Precisa do servidor de email de testes (mailcatcher) a correr, em
-  http://localhost:1080 (ver README). O email é enviado em segundo plano,
-  até cerca de um minuto depois da compra.
+  O email é enviado em segundo plano, até cerca de um minuto depois da compra.
 
   Contexto:
-    Dado que fiz login com a conta de cliente de demonstração
+    Dado que fiz login como cliente
     E que tenho no carrinho os produtos:
       | quantidade | preço | CO2 |
       | 2          | 10.00 | A   |

@@ -1,0 +1,36 @@
+{
+  "contra-reembolso": {
+    "metodo": "cash-on-delivery",
+    "dados": {}
+  },
+  "cartão de crédito": {
+    "metodo": "credit-card",
+    "dados": {
+      "número": "4111-1111-1111-1111",
+      "validade": "daqui a 2 anos",
+      "código de segurança": "123",
+      "titular": "Jack Howe"
+    }
+  },
+  "transferência bancária": {
+    "metodo": "bank-transfer",
+    "dados": {
+      "banco": "Banco Lusitano",
+      "titular da conta": "Jack Howe",
+      "número da conta": "123456789"
+    }
+  },
+  "cartão-oferta": {
+    "metodo": "gift-card",
+    "dados": {
+      "número do cartão-oferta": "ABCD1234EFGH5678",
+      "código de validação": "AB12"
+    }
+  },
+  "pagamento a prestações": {
+    "metodo": "buy-now-pay-later",
+    "dados": {
+      "prestações": "3"
+    }
+  }
+}

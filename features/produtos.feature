@@ -6,20 +6,20 @@ Funcionalidade: Gestão de produtos
   Para manter o catálogo da loja atualizado
 
   Cenário: Criar um produto com dados válidos
-    Dado que fiz login com a conta de administrador
+    Dado que fiz login como administrador
     Quando crio um produto com os dados:
       | nome  | Martelo de carpinteiro |
       | preço | 12.50                  |
     Então o produto fica disponível no catálogo com esses dados
 
   Cenário: Alterar o preço de um produto
-    Dado que fiz login com a conta de administrador
+    Dado que fiz login como administrador
     E que existe um produto criado por mim
     Quando altero o preço do produto para 19.99
     Então o produto passa a ter o preço 19.99
 
   Cenário: Apagar um produto
-    Dado que fiz login com a conta de administrador
+    Dado que fiz login como administrador
     E que existe um produto criado por mim
     Quando apago o produto
     Então o produto deixa de existir no catálogo

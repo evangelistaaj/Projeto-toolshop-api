@@ -1,5 +1,6 @@
 import type { APIRequestContext } from '@playwright/test';
 import { contaAdmin } from './contas';
+import { lerDados } from './dados';
 
 export type DadosProduto = {
   name: string;
@@ -25,16 +26,27 @@ async function primeiroId(api: APIRequestContext, caminho: string): Promise<stri
   return lista[0].id;
 }
 
-// Dados válidos para criar um produto. Os ids vêm da API, porque mudam
-// sempre que se repõem os dados. Os campos do cenário substituem os de omissão.
+// Produtos do catálogo usados como massa de teste (dados/produtos.json).
+// Em inglês, como o resto do catálogo da Toolshop.
+const PRODUTOS = lerDados<{ nome: string; descricao: string }[]>('produtos.json');
+
+// Uma referência única, como as de um catálogo real (ex.: "MHO7X2K9A3F").
+function referenciaUnica(): string {
+  return (Date.now().toString(36) + Math.random().toString(36).slice(2, 5)).toUpperCase();
+}
+
+// Dados válidos para criar um produto: um produto do catálogo, ao acaso, com uma
+// referência única no nome. Os ids vêm da API, porque mudam sempre que se repõem
+// os dados. Os campos do cenário substituem os de omissão.
 export async function dadosDeProdutoValidos(
   api: APIRequestContext,
   alteracoes: Partial<DadosProduto> = {},
 ): Promise<DadosProduto> {
+  const produto = PRODUTOS[Math.floor(Math.random() * PRODUTOS.length)];
   return {
     // Nome único: o email de confirmação é encontrado pelos nomes dos produtos.
-    name: `Produto de teste ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    description: 'Produto criado por um teste automatizado.',
+    name: `${produto.nome} - ref. ${referenciaUnica()}`,
+    description: produto.descricao,
     price: 9.99,
     category_id: await primeiroId(api, '/categories'),
     brand_id: await primeiroId(api, '/brands'),

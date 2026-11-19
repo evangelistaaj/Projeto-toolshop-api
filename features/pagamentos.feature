@@ -8,7 +8,7 @@ Funcionalidade: Métodos de pagamento
   Regra: Cada método de pagamento fica registado na fatura
 
     Contexto:
-      Dado que fiz login com a conta de cliente de demonstração
+      Dado que fiz login como cliente
       E que tenho no carrinho os produtos:
         | quantidade | preço | CO2 |
         |          1 | 10.00 | D   |
@@ -72,16 +72,16 @@ Funcionalidade: Métodos de pagamento
 
     Cenário: Uma transferência bancária com dados válidos é aceite
       Quando verifico o pagamento com transferência bancária:
-        | banco            | Banco Exemplo |
-        | titular da conta | Jack Howe     |
-        | número da conta  |     123456789 |
+        | banco            | Banco Lusitano |
+        | titular da conta | Jack Howe      |
+        | número da conta  |      123456789 |
       Então o pagamento é aceite
 
     Cenário: Uma transferência bancária com letras no número da conta é recusada
       Quando verifico o pagamento com transferência bancária:
-        | banco            | Banco Exemplo |
-        | titular da conta | Jack Howe     |
-        | número da conta  |     12345678A |
+        | banco            | Banco Lusitano |
+        | titular da conta | Jack Howe      |
+        | número da conta  |      12345678A |
       Então o pagamento é recusado por causa do campo "número da conta"
 
     Cenário: Um cartão-oferta com dados válidos é aceite
@@ -108,7 +108,7 @@ Funcionalidade: Métodos de pagamento
     os mesmos dados que a verificação recusa.
 
     Contexto:
-      Dado que fiz login com a conta de cliente de demonstração
+      Dado que fiz login como cliente
       E que tenho no carrinho os produtos:
         | quantidade | preço | CO2 |
         |          1 | 10.00 | D   |
@@ -141,9 +141,9 @@ Funcionalidade: Métodos de pagamento
       https://github.com/evangelistaaj/Projeto-toolshop-api/issues/16
 
       Quando finalizo a compra pagando com transferência bancária:
-        | banco            | Banco Exemplo |
-        | titular da conta | Jack Howe     |
-        | número da conta  |     12345678A |
+        | banco            | Banco Lusitano |
+        | titular da conta | Jack Howe      |
+        | número da conta  |      12345678A |
       Então a compra é recusada
 
     Cenário: Comprar com um cartão-oferta de 15 caracteres é recusado
@@ -158,7 +158,7 @@ Funcionalidade: Métodos de pagamento
     cartão só pode ser mostrado mascarado.
 
     Contexto:
-      Dado que fiz login com a conta de cliente de demonstração
+      Dado que fiz login como cliente
       E que tenho no carrinho os produtos:
         | quantidade | preço | CO2 |
         |          1 | 10.00 | D   |
@@ -171,7 +171,7 @@ Funcionalidade: Métodos de pagamento
       payment.payment_details.cvv.
       https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14
 
-      Quando finalizo a compra pagando com o cartão de crédito:
+      Quando finalizo a compra pagando com cartão de crédito:
         | número              | <numero>   |
         | validade            | <validade> |
         | código de segurança | <cvv>      |
@@ -189,7 +189,7 @@ Funcionalidade: Métodos de pagamento
       sem mascarar.
       https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14
 
-      Quando finalizo a compra pagando com o cartão de crédito:
+      Quando finalizo a compra pagando com cartão de crédito:
         | número              | <numero>       |
         | validade            | daqui a 2 anos |
         | código de segurança |            123 |

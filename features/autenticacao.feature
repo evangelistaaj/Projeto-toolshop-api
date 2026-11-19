@@ -5,7 +5,7 @@ Funcionalidade: Autenticação
   Para aceder aos meus dados e às minhas compras
 
   Cenário: Login com sucesso com a conta de cliente
-    Quando faço login com a conta de cliente de demonstração
+    Quando faço login como cliente
     Então recebo um token de acesso válido
 
   Cenário: Login com um email que não existe
@@ -13,7 +13,7 @@ Funcionalidade: Autenticação
     Então recebo uma resposta com o código 401
 
   Cenário: Consultar os dados da conta depois do login
-    Dado que fiz login com a conta de cliente de demonstração
+    Dado que fiz login como cliente
     Quando consulto os dados da minha conta
     Então vejo os dados da conta com que fiz login
 

@@ -2,7 +2,7 @@ import { When, Then, DataTable } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import type { MundoToolshop } from '../support/world';
 import { comprarCarrinho, faturaDaCompra, moradaIndicada } from '../support/faturas';
-import { campoDaApi, detalhesDoPagamento, validade, type MetodoDePagamento } from '../support/pagamentos';
+import { campoDaApi, detalhesDoPagamento, type MetodoDePagamento } from '../support/pagamentos';
 import { corpoSeguro } from '../support/seguranca';
 
 // Todos os campos da resposta (a qualquer profundidade) cujo nome corresponde ao padrão,
@@ -35,9 +35,14 @@ When('finalizo a compra pagando com {metodo}', async function (this: MundoToolsh
 
 // Compra com os dados de pagamento indicados no cenário (campo | valor), válidos ou não.
 When('finalizo a compra pagando com {metodo}:', async function (this: MundoToolshop, metodo: MetodoDePagamento, tabela: DataTable) {
+  const dados = tabela.rowsHash();
+  // Guarda o cartão usado (se houver), para depois verificar que a fatura não o expõe.
+  if (dados['número']) {
+    this.cartaoDaCompra = { numero: dados['número'], cvv: dados['código de segurança'] };
+  }
   await comprarCarrinho(this, moradaIndicada(this), {
     metodo: metodo.metodo,
-    detalhes: detalhesDoPagamento(tabela.rowsHash()),
+    detalhes: detalhesDoPagamento(dados),
   });
 });
 
@@ -46,21 +51,6 @@ Then('a fatura regista o pagamento com {metodo}', async function (this: MundoToo
   expect(fatura.payment?.payment_method, `a fatura devia registar o pagamento com ${metodo.nome}`).toBe(
     metodo.metodo,
   );
-});
-
-When('finalizo a compra pagando com o cartão de crédito:', async function (this: MundoToolshop, tabela: DataTable) {
-  const cartao = tabela.rowsHash();
-  this.cartaoDaCompra = { numero: cartao['número'], cvv: cartao['código de segurança'] };
-
-  await comprarCarrinho(this, moradaIndicada(this), {
-    metodo: 'credit-card',
-    detalhes: {
-      credit_card_number: cartao['número'],
-      expiration_date: validade(cartao['validade']),
-      cvv: cartao['código de segurança'],
-      card_holder_name: cartao['titular'],
-    },
-  });
 });
 
 Then('a fatura não mostra o código de segurança do cartão', async function (this: MundoToolshop) {
