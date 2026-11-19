@@ -32,6 +32,13 @@ jobs:
           repository: testsmith-io/practice-software-testing
           path: pst
 
+      # As imagens do servidor web e do agendador da Toolshop só existem para ARM (linux/arm64),
+      # e a máquina do GitHub é x86 (amd64): sem emulação, esses contentores não correm.
+      - name: Ativar a emulação ARM (QEMU)
+        uses: docker/setup-qemu-action@v4
+        with:
+          platforms: arm64
+
       # O nome do projeto (-p pst) dá os nomes dos contentores (pst-laravel-api-1...),
       # os mesmos do ambiente local. A interface (angular-ui) não é precisa.
       - name: Arrancar a Toolshop (API, servidor web, agendador e base de dados)
@@ -75,6 +82,7 @@ jobs:
             echo "Tentativa $i: HTTP $codigo"
             sleep 2
           done
+          set +e
           echo "::group::Última resposta da API"; cat /tmp/resposta.txt; echo; echo "::endgroup::"
           echo "::group::Contentores"; docker ps -a; echo "::endgroup::"
           echo "::group::Registo do servidor web"; docker logs pst-web-1 2>&1 | tail -50; echo "::endgroup::"
