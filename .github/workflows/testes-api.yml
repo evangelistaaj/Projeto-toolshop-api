@@ -70,10 +70,16 @@ jobs:
       - name: Esperar pela API
         run: |
           for i in $(seq 1 60); do
-            if curl -sf http://localhost:8091/status > /dev/null; then exit 0; fi
+            codigo=$(curl -s -o /tmp/resposta.txt -w '%{http_code}' --max-time 5 http://localhost:8091/status || true)
+            if [ "$codigo" = "200" ]; then echo "API pronta (tentativa $i)"; exit 0; fi
+            echo "Tentativa $i: HTTP $codigo"
             sleep 2
           done
-          docker logs pst-laravel-api-1
+          echo "::group::Última resposta da API"; cat /tmp/resposta.txt; echo; echo "::endgroup::"
+          echo "::group::Contentores"; docker ps -a; echo "::endgroup::"
+          echo "::group::Registo do servidor web"; docker logs pst-web-1 2>&1 | tail -50; echo "::endgroup::"
+          echo "::group::Registo da API"; docker logs pst-laravel-api-1 2>&1 | tail -50; echo "::endgroup::"
+          echo "::group::Registo do Laravel"; docker exec pst-laravel-api-1 sh -c 'tail -50 storage/logs/laravel.log' 2>&1; echo "::endgroup::"
           exit 1
 
       - name: Cenários normais
