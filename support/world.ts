@@ -34,6 +34,10 @@ export class MundoToolshop extends World {
   // Todos os carrinhos criados no cenário, para o hook After os apagar.
   carrinhosCriados: string[] = [];
 
+  // Catálogo percorrido página a página: os ids recebidos e o total que a API indicou.
+  produtosPercorridos: string[] = [];
+  totalDoCatalogo?: number;
+
   // Código postal da última pesquisa de morada, para comparar com a resposta.
   codigoPostalPesquisado?: string;
 

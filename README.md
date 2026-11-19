@@ -190,7 +190,7 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 113 | 74 | 39 | 0 | 23 |
+| 118 | 79 | 39 | 0 | 23 |
 
 > Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 39 execuções a vermelho correspondem a **23 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (2: alterar o preço sem login e como cliente), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1) e #23 (1).
 
@@ -199,6 +199,9 @@ Funcionalidade: Catálogo de produtos
 | Funcionalidade | Cenário | Verificações |
 |---|---|---|
 | Catálogo de produtos | Consultar o catálogo | Código HTTP 200, lista de produtos não vazia, tipos dos campos `id`, `name`, `price` e `in_stock` |
+| Catálogo de produtos | A segunda página continua onde a primeira acabou | Página 2, 9 produtos, do 10.º ao 18.º (`current_page`, `per_page`, `from`, `to`) |
+| Catálogo de produtos | Uma página depois da última | Código 200, lista vazia, `from` e `to` a `null` (a página pedida vem do `last_page` da própria resposta) |
+| Catálogo de produtos | Percorrer todas as páginas, por omissão, por nome crescente e por preço decrescente | Recebem-se tantos produtos como o `total` indicado, **sem repetidos** entre páginas (uma ordenação instável faria produtos saltar de página) |
 | Autenticação | Login com sucesso | Código 200, `access_token` em texto, `token_type` "bearer" (sem distinguir maiúsculas), `expires_in` numérico e positivo |
 | Autenticação | Login com um email que não existe | Código 401 |
 | Autenticação | Consultar os dados da conta depois do login | Código 200, campos da conta, **a password nunca é devolvida**, o email é o da conta com que se fez login |
@@ -295,6 +298,8 @@ Funcionalidade: Catálogo de produtos
 
 > 🔑 Para testar um token expirado sem esperar os 5 minutos de validade, o cenário pede um token verdadeiro e assina-o de novo, com outras datas, usando o segredo da Toolshop local (lido por `docker exec`, `config('jwt.secret')`, e nunca escrito em registos). O mesmo mecanismo cria o token "ainda válido" do controlo. As alterações de tokens estão em `support/jwt.ts`, só com o `crypto` do Node.
 
+> 📚 Os cenários da paginação só fazem leituras e correm também contra a API pública (confirmado: 50 produtos em 6 páginas, contra os da Toolshop local). Por isso, nenhum oráculo fixa o tamanho do catálogo: usam o `total` e o `last_page` da própria resposta. Observações que não são bugs: o parâmetro `per_page` é ignorado (são sempre 9 por página), e `page=0`, `page=-1` ou `page=abc` são tratados como a página 1, em vez de serem recusados.
+
 > 🌱 A regra do desconto ecológico não está documentada: veio do código-fonte da Toolshop (`InvoiceService`). Os cenários testam as partições (só ecológicos, nenhum, maioria) e os limites (exatamente metade; B conta, C não), cada um com produtos e preços criados pelo próprio cenário, para que as contas não dependam dos dados iniciais. Os valores de dinheiro são comparados em **cêntimos inteiros**, para não haver erros de vírgula flutuante, e o subtotal de 10.10 foi escolhido por ser um limite de arredondamento: 5% dá exatamente meio cêntimo (0.505).
 
 > 📧 Para encontrar o email certo entre os de todas as execuções, cada produto criado pelos testes tem um nome único; o email da compra é o que menciona todos os produtos do cenário.
@@ -323,6 +328,7 @@ Funcionalidade: Catálogo de produtos
 - [x] Autorização: dados de outros clientes e funções reservadas ao administrador (OWASP API1 e API5)
 - [x] Registo de cliente e bloqueio de conta
 - [x] Tokens inválidos: alterado, sem assinatura, expirado e depois do logout
+- [x] Catálogo: paginação (próximo: pesquisa, filtros e ordenação)
 - [x] Relatórios HTML
 - [x] Integração contínua (GitHub Actions), com a Toolshop em Docker
 
