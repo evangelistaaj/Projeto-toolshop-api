@@ -2,7 +2,7 @@ import type { APIResponse } from '@playwright/test';
 
 // Campos que nunca devem aparecer em mensagens de falha nem em relatórios.
 // Num sistema real juntavam-se aqui os dados pessoais (email, telefone, morada...).
-const CAMPOS_SENSIVEIS = ['access_token', 'password'];
+const CAMPOS_SENSIVEIS = ['access_token', 'password', 'cvv', 'credit_card_number'];
 
 // Devolve o corpo da resposta pronto a mostrar numa mensagem de falha,
 // com os campos sensíveis trocados por "***".

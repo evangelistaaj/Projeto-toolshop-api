@@ -16,6 +16,18 @@ function camposComNome(valor: unknown, padrao: RegExp, caminho = 'fatura'): { ca
   ]);
 }
 
+// Caminhos dos valores da resposta (a qualquer profundidade) que contêm algum dos textos procurados.
+// Devolve só os caminhos, para as mensagens de falha nunca mostrarem o dado sensível.
+function caminhosQueContem(valor: unknown, procurados: string[], caminho = 'fatura'): string[] {
+  if (typeof valor === 'string' || typeof valor === 'number') {
+    return procurados.some((p) => String(valor).includes(p)) ? [caminho] : [];
+  }
+  if (valor === null || typeof valor !== 'object') {
+    return [];
+  }
+  return Object.entries(valor).flatMap(([nome, filho]) => caminhosQueContem(filho, procurados, `${caminho}.${nome}`));
+}
+
 When('finalizo a compra pagando com {metodo}', async function (this: MundoToolshop, metodo: MetodoDePagamento) {
   await comprarCarrinho(this, moradaIndicada(this), metodo);
 });
@@ -48,8 +60,11 @@ Then('a fatura não mostra o código de segurança do cartão', async function (
   expect(fatura.payment?.payment_method, 'a fatura devia indicar o pagamento com cartão').toBe('credit-card');
 
   // Nenhum campo com nome de código de segurança pode ter valor.
-  const comValor = camposComNome(fatura, /cvv|cvc|security_code/i).filter((c) => c.valor !== null && c.valor !== '');
-  expect(comValor, 'campos com o código de segurança do cartão').toEqual([]);
+  // A mensagem mostra só onde estão, nunca o valor.
+  const comValor = camposComNome(fatura, /cvv|cvc|security_code/i)
+    .filter((c) => c.valor !== null && c.valor !== '')
+    .map((c) => c.caminho);
+  expect(comValor, 'campos com o código de segurança do cartão (valores ocultos)').toEqual([]);
 });
 
 Then('a fatura não mostra o número completo do cartão', async function (this: MundoToolshop) {
@@ -57,8 +72,8 @@ Then('a fatura não mostra o número completo do cartão', async function (this:
   expect(fatura.payment?.payment_method, 'a fatura devia indicar o pagamento com cartão').toBe('credit-card');
 
   // O número não pode aparecer em lado nenhum: nem com hífenes, nem só com algarismos.
-  const texto = JSON.stringify(fatura);
+  // A mensagem mostra só onde aparece, nunca o número.
   const numero = this.cartaoDaCompra!.numero;
-  expect(texto, 'a fatura não devia ter o número completo do cartão').not.toContain(numero);
-  expect(texto, 'a fatura não devia ter o número completo do cartão').not.toContain(numero.replace(/-/g, ''));
+  const expostos = caminhosQueContem(fatura, [numero, numero.replace(/-/g, '')]);
+  expect(expostos, 'campos com o número completo do cartão (valores ocultos)').toEqual([]);
 });
