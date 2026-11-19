@@ -60,15 +60,30 @@ $env:API_URL = "http://localhost:8091"
 npm test
 ```
 
+> 🛡️ Os cenários que criam dados (produtos, carrinhos, compras) têm a tag `@so-local`. Quando o `API_URL` não é `localhost`, o `cucumber.js` exclui-os automaticamente: nunca criam dados num ambiente partilhado, como a API pública, nem por engano.
+
+A versão do Node.js está em `.nvmrc` e no campo `engines` do `package.json`.
+
 ### ⏯️ Comandos
 
 | Comando | O que corre |
 |---|---|
 | `npm test` | Todos os cenários, exceto os que reproduzem bugs conhecidos e os lentos (alguns segundos) |
 | `npm run test:lento` | Só os cenários lentos (`@lento`), que esperam por processos em segundo plano (até 90 s cada). Arranca antes um processador da fila da Toolshop só para o teste |
-| `npm run test:bugs` | Só os cenários que reproduzem bugs conhecidos (`@bug-conhecido`) |
+| `npm run test:bugs` | Só os cenários que reproduzem bugs conhecidos (`@bug-conhecido`), com o resumo das falhas em `resultados/bugs.txt` |
 | `npm run test:limpo` | Repõe os dados da Toolshop local e corre `npm test` |
-| `npx cucumber-js --tags @issue-5` | Só os cenários de um bug (cada um tem a tag do seu issue) |
+| `npm run typecheck` | Verifica os tipos do TypeScript em todo o projeto, sem correr os testes |
+| `npx cucumber-js -p bugs --tags @issue-5` | Só os cenários de um bug (cada um tem a tag do seu issue). O `-p bugs` é preciso: as tags da linha de comandos juntam-se às do perfil, e o perfil normal exclui os bugs conhecidos |
+
+### 📊 Relatórios
+
+Cada execução grava um relatório HTML na pasta `resultados/` (ignorada pelo Git), com cada cenário, os seus passos e as mensagens de falha:
+
+| Comando | Relatório |
+|---|---|
+| `npm test` | `resultados/relatorio.html` |
+| `npm run test:lento` | `resultados/lento.html` |
+| `npm run test:bugs` | `resultados/bugs.html` e o resumo em texto `resultados/bugs.txt` |
 
 ### 📧 Servidor de email de testes
 
@@ -234,7 +249,7 @@ Funcionalidade: Catálogo de produtos
 
 > 🎯 Os oráculos da numeração dependem só das faturas que o próprio cenário cria. Comparar com as faturas já existentes daria resultados diferentes conforme o número de execuções anteriores (a sequência das faturas novas vai subindo a cada compra).
 
-> 🧹 Os cenários que criam produtos ou carrinhos apagam-nos no fim (hook `After`), por isso a base de dados fica como estava. Correm só na Toolshop local (tag `@so-local`).
+> 🧹 Os cenários que criam produtos ou carrinhos apagam-nos no fim (hook `After`), por isso a base de dados fica como estava. Correm só na Toolshop local (tag `@so-local`, excluída automaticamente com outro `API_URL`).
 
 ---
 

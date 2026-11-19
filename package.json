@@ -1,19 +1,23 @@
 {
   "name": "toolshop-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "Testes automatizados da API da Toolshop (Practice Software Testing) com Cucumber, Playwright e TypeScript, em Gherkin (português).",
   "main": "index.js",
   "scripts": {
     "test": "cucumber-js",
     "test:bugs": "cucumber-js -p bugs",
     "test:lento": "docker exec -d pst-laravel-api-1 php artisan queue:work --max-time=300 && cucumber-js -p lento",
     "db:reset": "docker exec pst-laravel-api-1 php artisan migrate:fresh --seed && docker exec -u root pst-laravel-api-1 chown -R www-data:www-data storage bootstrap/cache",
-    "test:limpo": "npm run db:reset && npm test"
+    "test:limpo": "npm run db:reset && npm test",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
-  "author": "",
+  "author": "Arthur Evangelista",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=26"
+  },
   "devDependencies": {
     "@cucumber/cucumber": "^13.3.0",
     "@playwright/test": "^1.65.0",

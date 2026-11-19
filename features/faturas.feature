@@ -109,8 +109,8 @@ Funcionalidade: Compra com fatura
       Então o número da fatura tem o formato INV-ano-sequência de 7 algarismos
 
   Regra: A compra gasta o stock dos produtos
-    O stock é descontado em segundo plano, por um agendador que corre uma vez
-    por minuto. Os cenários lentos esperam até 90 segundos pelo resultado.
+    O stock é descontado em segundo plano, até cerca de um minuto depois da
+    compra. Os cenários lentos esperam até 90 segundos pelo resultado.
 
     @lento
     Cenário: Comprar todo o stock esgota o produto
