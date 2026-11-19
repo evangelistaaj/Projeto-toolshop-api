@@ -87,7 +87,9 @@ A cada `push` para o `main` (e em cada pull request), o GitHub Actions (`.github
 5. corre os bugs conhecidos, só para o relatório (falham de propósito e não põem a execução a vermelho);
 6. publica os relatórios HTML como artefacto (`relatorios`), na página de cada execução, no separador **Actions**.
 
-Também pode ser corrida à mão, no separador **Actions** → *Testes da API* → *Run workflow*.
+Também pode ser corrida à mão, no separador **Actions** → *Testes da API* → *Run workflow*. Uma execução completa demora cerca de 2 minutos.
+
+> 🧬 As imagens do servidor web e do agendador da Toolshop estão publicadas só para ARM (`linux/arm64`), e as máquinas do GitHub são x86 (`amd64`). Sem mais nada, esses contentores não correm e a API não responde. A pipeline ativa a emulação ARM (QEMU, com `docker/setup-qemu-action`) antes de arrancar a Toolshop; a API e a base de dados correm de forma nativa.
 
 ### 📊 Relatórios
 
@@ -295,7 +297,7 @@ Funcionalidade: Catálogo de produtos
 - [x] Massa de teste em ficheiros JSON (produtos com nomes de negócio, países, províncias e pagamentos)
 - [x] Autorização: dados de outros clientes e funções reservadas ao administrador (OWASP API1 e API5)
 - [x] Relatórios HTML
-- [ ] Integração contínua (GitHub Actions) *(em curso)*
+- [x] Integração contínua (GitHub Actions), com a Toolshop em Docker
 
 ---
 
