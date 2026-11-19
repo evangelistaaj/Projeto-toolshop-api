@@ -50,9 +50,8 @@ Funcionalidade: Métodos de pagamento
         Bug: a validade MM/AAAA é lida como o dia 1 desse mês, por isso o cartão
         é recusado durante todo o mês em que ainda é válido.
         https://github.com/evangelistaaj/Projeto-toolshop-api/issues/15
-
-        | caso                                | numero              | validade       | cvv  | titular   |
-        | validade no mês atual               | 4111-1111-1111-1111 | este mês       |  123 | Jack Howe |
+        | caso                  | numero              | validade | cvv | titular   |
+        | validade no mês atual | 4111-1111-1111-1111 | este mês | 123 | Jack Howe |
 
     Esquema do Cenário: Um cartão de crédito com <caso> é recusado
       Quando verifico o pagamento com cartão de crédito:
@@ -102,6 +101,56 @@ Funcionalidade: Métodos de pagamento
         | número de 15 caracteres             | ABCD1234EFGH567   | AB12   | número do cartão-oferta |
         | número de 17 caracteres             | ABCD1234EFGH56789 | AB12   | número do cartão-oferta |
         | código de validação de 3 caracteres | ABCD1234EFGH5678  | AB1    | código de validação     |
+
+  Regra: A compra recusa dados de pagamento inválidos
+    A verificação do pagamento é um pedido à parte, que quem chama a API
+    diretamente pode saltar. Por isso a compra tem de recusar, ela própria,
+    os mesmos dados que a verificação recusa.
+
+    Contexto:
+      Dado que fiz login com a conta de cliente de demonstração
+      E que tenho no carrinho os produtos:
+        | quantidade | preço | CO2 |
+        |          1 | 10.00 | D   |
+      E que indico a morada sugerida para o código postal "1000-001" de "Portugal"
+      E que indico o distrito "Lisboa"
+
+    @bug-conhecido @issue-16
+    Esquema do Cenário: Comprar com um cartão de crédito com <caso> é recusado
+      Bug: a compra não valida os dados do cartão (só os do cartão-oferta),
+      e aceita dados que a verificação do pagamento recusa.
+      https://github.com/evangelistaaj/Projeto-toolshop-api/issues/16
+
+      Quando finalizo a compra pagando com cartão de crédito:
+        | número              | <numero>   |
+        | validade            | <validade> |
+        | código de segurança | <cvv>      |
+        | titular             | <titular>  |
+      Então a compra é recusada
+
+      Exemplos:
+        | caso                                | numero              | validade       | cvv | titular   |
+        | número com letras                   | 4111-1111-1111-ABCD | daqui a 2 anos | 123 | Jack Howe |
+        | validade no mês passado             | 4111-1111-1111-1111 | o mês passado  | 123 | Jack Howe |
+        | código de segurança de 2 algarismos | 4111-1111-1111-1111 | daqui a 2 anos |  12 | Jack Howe |
+
+    @bug-conhecido @issue-16
+    Cenário: Comprar com uma transferência bancária com letras no número da conta é recusado
+      Bug: a compra não valida os dados da transferência (só os do
+      cartão-oferta), e aceita dados que a verificação do pagamento recusa.
+      https://github.com/evangelistaaj/Projeto-toolshop-api/issues/16
+
+      Quando finalizo a compra pagando com transferência bancária:
+        | banco            | Banco Exemplo |
+        | titular da conta | Jack Howe     |
+        | número da conta  |     12345678A |
+      Então a compra é recusada
+
+    Cenário: Comprar com um cartão-oferta de 15 caracteres é recusado
+      Quando finalizo a compra pagando com cartão-oferta:
+        | número do cartão-oferta | ABCD1234EFGH567 |
+        | código de validação     | AB12            |
+      Então a compra é recusada
 
   Regra: A fatura não expõe os dados sensíveis do cartão
     As regras de segurança dos pagamentos com cartão (PCI DSS) não permitem

@@ -33,6 +33,14 @@ When('finalizo a compra pagando com {metodo}', async function (this: MundoToolsh
   await comprarCarrinho(this, moradaIndicada(this), metodo);
 });
 
+// Compra com os dados de pagamento indicados no cenário (campo | valor), válidos ou não.
+When('finalizo a compra pagando com {metodo}:', async function (this: MundoToolshop, metodo: MetodoDePagamento, tabela: DataTable) {
+  await comprarCarrinho(this, moradaIndicada(this), {
+    metodo: metodo.metodo,
+    detalhes: detalhesDoPagamento(tabela.rowsHash()),
+  });
+});
+
 Then('a fatura regista o pagamento com {metodo}', async function (this: MundoToolshop, metodo: MetodoDePagamento) {
   const fatura = await faturaDaCompra(this);
   expect(fatura.payment?.payment_method, `a fatura devia registar o pagamento com ${metodo.nome}`).toBe(

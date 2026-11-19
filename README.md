@@ -140,9 +140,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 77 | 52 | 25 | 0 | 15 |
+| 82 | 53 | 29 | 0 | 16 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 25 execuções a vermelho correspondem a **15 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) e #15 (1).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 29 execuções a vermelho correspondem a **16 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) e #16 (4: três cartões inválidos e uma conta com letras, numa compra).
 
 **O que já é verificado**
 
@@ -201,6 +201,8 @@ Funcionalidade: Catálogo de produtos
 | Pagamentos | Verificação de um cartão com dados inválidos: validade no mês passado; CVV com 2 e com 5 algarismos; número sem hífenes e com letras; titular com algarismos | Código 422, com erro **só** no campo alterado (cada exemplo parte de dados válidos e muda um campo) |
 | Pagamentos | Verificação de uma transferência bancária: dados válidos; número da conta com letras | 200; 422 só no número da conta |
 | Pagamentos | Verificação de um cartão-oferta: 16 caracteres e código de 4 (válido); número com 15 e com 17; código com 3 | 200; 422 só no campo alterado |
+| Pagamentos 🐞 | Comprar com um cartão inválido (número com letras, expirado, CVV com 2 algarismos) ou uma conta com letras | `POST /invoices`: código 422 e nenhuma fatura, como na verificação — **falha: a compra é aceite e cria a fatura** (bug [#16](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/16)) |
+| Pagamentos | Comprar com um cartão-oferta de 15 caracteres (controlo) | Código 422 e nenhuma fatura: a compra valida o cartão-oferta, o que prova que o teste distingue os dois comportamentos |
 | Pagamentos 🐞 | A fatura não mostra o código de segurança do cartão (CVV de 3 e de 4 algarismos) | Compra com cartão de crédito; a fatura tem o pagamento com cartão; nenhum campo com nome de código de segurança (`cvv`, `cvc`, `security_code`), a qualquer profundidade, tem valor — **falha: devolve `payment.payment_details.cvv`** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 | Pagamentos 🐞 | A fatura não mostra o número completo do cartão (dois números) | O número não aparece em lado nenhum da resposta, nem com hífenes nem só com algarismos (o número mascarado é aceite) — **falha: vem completo** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 
@@ -229,7 +231,7 @@ Funcionalidade: Catálogo de produtos
 - [x] Testes para os problemas encontrados na API (faturas e stock)
 - [x] Carrinho com vários produtos e desconto ecológico
 - [x] Email de confirmação da compra (servidor de email de testes)
-- [ ] Métodos de pagamento *(em curso: registo de cada método, dados sensíveis do cartão e verificação dos dados feitos; falta a compra com dados inválidos)*
+- [x] Métodos de pagamento (registo de cada método, verificação dos dados, compra com dados inválidos e dados sensíveis do cartão)
 - [ ] Massa de teste em ficheiros JSON (moradas e produtos com nomes de negócio)
 - [ ] Relatórios e integração contínua
 
@@ -254,6 +256,7 @@ Funcionalidade: Catálogo de produtos
 | [#13](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/13) | `POST /invoices` **não arredonda** o desconto ecológico nem o total: a resposta da compra difere da fatura guardada, e a fatura pode falhar **1 cêntimo** nas contas | 🟠 Média (valores de dinheiro incoerentes) | Aberto |
 | [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14) | `GET /invoices/{id}` devolve os **dados do cartão completos, incluindo o CVV**: a API guarda o código de segurança e o número sem mascarar | 🔴 Alta (segurança: exposição de dados de pagamento, contra o PCI DSS) | Aberto |
 | [#15](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/15) | `POST /payment/check` **recusa cartões no mês da validade**: `MM/AAAA` é lido como o dia 1 desse mês | 🟠 Média (impede pagamentos com cartões válidos) | Aberto |
+| [#16](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/16) | `POST /invoices` **não valida os dados do pagamento** (só o cartão-oferta): aceita compras com cartões expirados ou inválidos e contas com letras | 🔴 Alta (compras aceites com meios de pagamento inválidos) | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`. Quando só alguns exemplos de um esquema reproduzem um bug, ficam num bloco `Exemplos` à parte, com as tags e a descrição do bug, e os restantes continuam a correr normalmente.
 
