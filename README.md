@@ -140,7 +140,7 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 57 | 33 | 24 | 0 | 14 |
+| 62 | 38 | 24 | 0 | 14 |
 
 > Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 24 execuções a vermelho correspondem a **14 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) e #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão).
 
@@ -195,6 +195,7 @@ Funcionalidade: Catálogo de produtos
 | Email de confirmação ⏳ | Todos os produtos e o total da fatura | O email chega (até 90 s); tem uma linha `<quantidade> x <nome>` por produto; o `Total` do email é o total da fatura |
 | Email de confirmação ⏳🐞 | O email mostra o desconto ecológico | Linha `Eco-Friendly Discount (5%): -$ …` com a percentagem e o valor da fatura — **falha: a linha não aparece** (bug [#11](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/11)) |
 | Email de confirmação ⏳🐞 | O email indica o número da fatura | O email contém o `invoice_number` — **falha: não o indica** (bug [#12](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/12)) |
+| Pagamentos | Comprar com cada um dos 5 métodos (contra-reembolso, cartão de crédito, transferência bancária, cartão-oferta, pagamento a prestações) | Código 201; a fatura, consultada à parte, regista o método usado |
 | Pagamentos 🐞 | A fatura não mostra o código de segurança do cartão (CVV de 3 e de 4 algarismos) | Compra com cartão de crédito; a fatura tem o pagamento com cartão; nenhum campo com nome de código de segurança (`cvv`, `cvc`, `security_code`), a qualquer profundidade, tem valor — **falha: devolve `payment.payment_details.cvv`** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 | Pagamentos 🐞 | A fatura não mostra o número completo do cartão (dois números) | O número não aparece em lado nenhum da resposta, nem com hífenes nem só com algarismos (o número mascarado é aceite) — **falha: vem completo** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 
@@ -204,7 +205,7 @@ Funcionalidade: Catálogo de produtos
 
 > 📧 Para encontrar o email certo entre os de todas as execuções, cada produto criado pelos testes tem um nome único; o email da compra é o que menciona todos os produtos do cenário.
 
-> 💳 Os dados de cartão dos testes são **números de teste inventados** e só correm na Toolshop local. A validade é escrita de forma relativa ("daqui a 2 anos") e calculada a partir da data de hoje, para que os cenários nunca caduquem.
+> 💳 Os dados de cartão dos testes são **números de teste inventados** e só correm na Toolshop local. A validade é escrita de forma relativa ("daqui a 2 anos") e calculada a partir da data de hoje, para que os cenários nunca caduquem. Nos cenários em que os dados do pagamento não são o tema, o Gherkin diz só o nome do método ("cartão-oferta") e o código usa dados válidos de exemplo, num dicionário em `support/pagamentos.ts` com um tipo de parâmetro próprio (`{metodo}`).
 
 > 🎯 Os oráculos da numeração dependem só das faturas que o próprio cenário cria. Comparar com as faturas já existentes daria resultados diferentes conforme o número de execuções anteriores (a sequência das faturas novas vai subindo a cada compra).
 
@@ -223,7 +224,7 @@ Funcionalidade: Catálogo de produtos
 - [x] Testes para os problemas encontrados na API (faturas e stock)
 - [x] Carrinho com vários produtos e desconto ecológico
 - [x] Email de confirmação da compra (servidor de email de testes)
-- [ ] Métodos de pagamento *(em curso: dados sensíveis do cartão feito; falta o registo de cada método e a validação dos dados)*
+- [ ] Métodos de pagamento *(em curso: registo de cada método e dados sensíveis do cartão feitos; falta a validação dos dados)*
 - [ ] Massa de teste em ficheiros JSON (moradas e produtos com nomes de negócio)
 - [ ] Relatórios e integração contínua
 

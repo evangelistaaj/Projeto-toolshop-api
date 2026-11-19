@@ -13,6 +13,20 @@ Funcionalidade: Métodos de pagamento
     E que indico a morada sugerida para o código postal "1000-001" de "Portugal"
     E que indico o distrito "Lisboa"
 
+  Regra: Cada método de pagamento fica registado na fatura
+
+    Esquema do Cenário: Comprar pagando com <metodo>
+      Quando finalizo a compra pagando com <metodo>
+      Então a fatura regista o pagamento com <metodo>
+
+      Exemplos:
+        | metodo                 |
+        | contra-reembolso       |
+        | cartão de crédito      |
+        | transferência bancária |
+        | cartão-oferta          |
+        | pagamento a prestações |
+
   Regra: A fatura não expõe os dados sensíveis do cartão
     As regras de segurança dos pagamentos com cartão (PCI DSS) não permitem
     guardar o código de segurança (CVV) depois do pagamento, e o número do
