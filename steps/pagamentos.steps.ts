@@ -2,7 +2,8 @@ import { When, Then, DataTable } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import type { MundoToolshop } from '../support/world';
 import { comprarCarrinho, faturaDaCompra, moradaIndicada } from '../support/faturas';
-import { validade, type MetodoDePagamento } from '../support/pagamentos';
+import { campoDaApi, detalhesDoPagamento, validade, type MetodoDePagamento } from '../support/pagamentos';
+import { corpoSeguro } from '../support/seguranca';
 
 // Todos os campos da resposta (a qualquer profundidade) cujo nome corresponde ao padrão,
 // com o caminho até eles. Serve para procurar dados sensíveis sem depender da estrutura.
@@ -76,4 +77,25 @@ Then('a fatura não mostra o número completo do cartão', async function (this:
   const numero = this.cartaoDaCompra!.numero;
   const expostos = caminhosQueContem(fatura, [numero, numero.replace(/-/g, '')]);
   expect(expostos, 'campos com o número completo do cartão (valores ocultos)').toEqual([]);
+});
+
+// Verificação do pagamento antes da compra: não precisa de login nem de carrinho.
+When('verifico o pagamento com {metodo}:', async function (this: MundoToolshop, metodo: MetodoDePagamento, tabela: DataTable) {
+  this.resposta = await this.api.post('/payment/check', {
+    data: { payment_method: metodo.metodo, payment_details: detalhesDoPagamento(tabela.rowsHash()) },
+  });
+});
+
+Then('o pagamento é aceite', async function (this: MundoToolshop) {
+  expect(this.resposta!.status(), await corpoSeguro(this.resposta!)).toBe(200);
+  expect((await this.resposta!.json()).message, 'mensagem da verificação').toBe('Payment was successful');
+});
+
+// A recusa tem de ser por causa do campo indicado, e só dele: os outros campos do exemplo são válidos.
+Then('o pagamento é recusado por causa do campo {string}', async function (this: MundoToolshop, campo: string) {
+  expect(this.resposta!.status(), await corpoSeguro(this.resposta!)).toBe(422);
+  const corpo = await this.resposta!.json();
+  expect(Object.keys(corpo.errors ?? {}), `só o campo "${campo}" devia ser recusado`).toEqual([
+    `payment_details.${campoDaApi(campo)}`,
+  ]);
 });

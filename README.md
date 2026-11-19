@@ -140,9 +140,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 62 | 38 | 24 | 0 | 14 |
+| 77 | 52 | 25 | 0 | 15 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 24 execuções a vermelho correspondem a **14 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) e #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 25 execuções a vermelho correspondem a **15 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) e #15 (1).
 
 **O que já é verificado**
 
@@ -196,6 +196,11 @@ Funcionalidade: Catálogo de produtos
 | Email de confirmação ⏳🐞 | O email mostra o desconto ecológico | Linha `Eco-Friendly Discount (5%): -$ …` com a percentagem e o valor da fatura — **falha: a linha não aparece** (bug [#11](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/11)) |
 | Email de confirmação ⏳🐞 | O email indica o número da fatura | O email contém o `invoice_number` — **falha: não o indica** (bug [#12](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/12)) |
 | Pagamentos | Comprar com cada um dos 5 métodos (contra-reembolso, cartão de crédito, transferência bancária, cartão-oferta, pagamento a prestações) | Código 201; a fatura, consultada à parte, regista o método usado |
+| Pagamentos | Verificação de um cartão de crédito com dados válidos e com CVV de 4 algarismos | `POST /payment/check`: código 200, "Payment was successful" |
+| Pagamentos 🐞 | Verificação de um cartão com a validade no mês atual (limite) | Código 200 — **falha: recusa o cartão durante todo o mês da validade** (bug [#15](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/15)) |
+| Pagamentos | Verificação de um cartão com dados inválidos: validade no mês passado; CVV com 2 e com 5 algarismos; número sem hífenes e com letras; titular com algarismos | Código 422, com erro **só** no campo alterado (cada exemplo parte de dados válidos e muda um campo) |
+| Pagamentos | Verificação de uma transferência bancária: dados válidos; número da conta com letras | 200; 422 só no número da conta |
+| Pagamentos | Verificação de um cartão-oferta: 16 caracteres e código de 4 (válido); número com 15 e com 17; código com 3 | 200; 422 só no campo alterado |
 | Pagamentos 🐞 | A fatura não mostra o código de segurança do cartão (CVV de 3 e de 4 algarismos) | Compra com cartão de crédito; a fatura tem o pagamento com cartão; nenhum campo com nome de código de segurança (`cvv`, `cvc`, `security_code`), a qualquer profundidade, tem valor — **falha: devolve `payment.payment_details.cvv`** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 | Pagamentos 🐞 | A fatura não mostra o número completo do cartão (dois números) | O número não aparece em lado nenhum da resposta, nem com hífenes nem só com algarismos (o número mascarado é aceite) — **falha: vem completo** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 
@@ -224,7 +229,7 @@ Funcionalidade: Catálogo de produtos
 - [x] Testes para os problemas encontrados na API (faturas e stock)
 - [x] Carrinho com vários produtos e desconto ecológico
 - [x] Email de confirmação da compra (servidor de email de testes)
-- [ ] Métodos de pagamento *(em curso: registo de cada método e dados sensíveis do cartão feitos; falta a validação dos dados)*
+- [ ] Métodos de pagamento *(em curso: registo de cada método, dados sensíveis do cartão e verificação dos dados feitos; falta a compra com dados inválidos)*
 - [ ] Massa de teste em ficheiros JSON (moradas e produtos com nomes de negócio)
 - [ ] Relatórios e integração contínua
 
@@ -248,8 +253,9 @@ Funcionalidade: Catálogo de produtos
 | [#12](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/12) | Email de confirmação **não indica o número da fatura** | 🟡 Baixa (usabilidade) | Aberto |
 | [#13](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/13) | `POST /invoices` **não arredonda** o desconto ecológico nem o total: a resposta da compra difere da fatura guardada, e a fatura pode falhar **1 cêntimo** nas contas | 🟠 Média (valores de dinheiro incoerentes) | Aberto |
 | [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14) | `GET /invoices/{id}` devolve os **dados do cartão completos, incluindo o CVV**: a API guarda o código de segurança e o número sem mascarar | 🔴 Alta (segurança: exposição de dados de pagamento, contra o PCI DSS) | Aberto |
+| [#15](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/15) | `POST /payment/check` **recusa cartões no mês da validade**: `MM/AAAA` é lido como o dia 1 desse mês | 🟠 Média (impede pagamentos com cartões válidos) | Aberto |
 
-Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`.
+Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`. Quando só alguns exemplos de um esquema reproduzem um bug, ficam num bloco `Exemplos` à parte, com as tags e a descrição do bug, e os restantes continuam a correr normalmente.
 
 ## 🔍 Achados
 

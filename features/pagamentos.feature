@@ -5,15 +5,15 @@ Funcionalidade: Métodos de pagamento
   Quero pagar as compras com o método que prefiro
   Para comprar da forma que me dá mais jeito
 
-  Contexto:
-    Dado que fiz login com a conta de cliente de demonstração
-    E que tenho no carrinho os produtos:
-      | quantidade | preço | CO2 |
-      |          1 | 10.00 | D   |
-    E que indico a morada sugerida para o código postal "1000-001" de "Portugal"
-    E que indico o distrito "Lisboa"
-
   Regra: Cada método de pagamento fica registado na fatura
+
+    Contexto:
+      Dado que fiz login com a conta de cliente de demonstração
+      E que tenho no carrinho os produtos:
+        | quantidade | preço | CO2 |
+        |          1 | 10.00 | D   |
+      E que indico a morada sugerida para o código postal "1000-001" de "Portugal"
+      E que indico o distrito "Lisboa"
 
     Esquema do Cenário: Comprar pagando com <metodo>
       Quando finalizo a compra pagando com <metodo>
@@ -27,10 +27,94 @@ Funcionalidade: Métodos de pagamento
         | cartão-oferta          |
         | pagamento a prestações |
 
+  Regra: A verificação do pagamento recusa dados inválidos
+    Antes de finalizar a compra, a loja verifica os dados do pagamento.
+    Cada exemplo parte de dados válidos e muda só um campo, para que uma
+    recusa só possa ter uma causa.
+
+    Esquema do Cenário: Um cartão de crédito com <caso> é aceite
+      Quando verifico o pagamento com cartão de crédito:
+        | número              | <numero>   |
+        | validade            | <validade> |
+        | código de segurança | <cvv>      |
+        | titular             | <titular>  |
+      Então o pagamento é aceite
+
+      Exemplos:
+        | caso                                | numero              | validade       | cvv  | titular   |
+        | dados válidos                       | 4111-1111-1111-1111 | daqui a 2 anos |  123 | Jack Howe |
+        | código de segurança de 4 algarismos | 4111-1111-1111-1111 | daqui a 2 anos | 4321 | Jack Howe |
+
+      @bug-conhecido @issue-15
+      Exemplos: no mês da validade
+        Bug: a validade MM/AAAA é lida como o dia 1 desse mês, por isso o cartão
+        é recusado durante todo o mês em que ainda é válido.
+        https://github.com/evangelistaaj/Projeto-toolshop-api/issues/15
+
+        | caso                                | numero              | validade       | cvv  | titular   |
+        | validade no mês atual               | 4111-1111-1111-1111 | este mês       |  123 | Jack Howe |
+
+    Esquema do Cenário: Um cartão de crédito com <caso> é recusado
+      Quando verifico o pagamento com cartão de crédito:
+        | número              | <numero>   |
+        | validade            | <validade> |
+        | código de segurança | <cvv>      |
+        | titular             | <titular>  |
+      Então o pagamento é recusado por causa do campo "<campo>"
+
+      Exemplos:
+        | caso                                | numero              | validade       | cvv   | titular     | campo               |
+        | validade no mês passado             | 4111-1111-1111-1111 | o mês passado  |   123 | Jack Howe   | validade            |
+        | código de segurança de 2 algarismos | 4111-1111-1111-1111 | daqui a 2 anos |    12 | Jack Howe   | código de segurança |
+        | código de segurança de 5 algarismos | 4111-1111-1111-1111 | daqui a 2 anos | 12345 | Jack Howe   | código de segurança |
+        | número sem hífenes                  |    4111111111111111 | daqui a 2 anos |   123 | Jack Howe   | número              |
+        | número com letras                   | 4111-1111-1111-ABCD | daqui a 2 anos |   123 | Jack Howe   | número              |
+        | titular com algarismos              | 4111-1111-1111-1111 | daqui a 2 anos |   123 | Jack Howe 2 | titular             |
+
+    Cenário: Uma transferência bancária com dados válidos é aceite
+      Quando verifico o pagamento com transferência bancária:
+        | banco            | Banco Exemplo |
+        | titular da conta | Jack Howe     |
+        | número da conta  |     123456789 |
+      Então o pagamento é aceite
+
+    Cenário: Uma transferência bancária com letras no número da conta é recusada
+      Quando verifico o pagamento com transferência bancária:
+        | banco            | Banco Exemplo |
+        | titular da conta | Jack Howe     |
+        | número da conta  |     12345678A |
+      Então o pagamento é recusado por causa do campo "número da conta"
+
+    Cenário: Um cartão-oferta com dados válidos é aceite
+      Quando verifico o pagamento com cartão-oferta:
+        | número do cartão-oferta | ABCD1234EFGH5678 |
+        | código de validação     | AB12             |
+      Então o pagamento é aceite
+
+    Esquema do Cenário: Um cartão-oferta com <caso> é recusado
+      Quando verifico o pagamento com cartão-oferta:
+        | número do cartão-oferta | <numero> |
+        | código de validação     | <codigo> |
+      Então o pagamento é recusado por causa do campo "<campo>"
+
+      Exemplos:
+        | caso                                | numero            | codigo | campo                   |
+        | número de 15 caracteres             | ABCD1234EFGH567   | AB12   | número do cartão-oferta |
+        | número de 17 caracteres             | ABCD1234EFGH56789 | AB12   | número do cartão-oferta |
+        | código de validação de 3 caracteres | ABCD1234EFGH5678  | AB1    | código de validação     |
+
   Regra: A fatura não expõe os dados sensíveis do cartão
     As regras de segurança dos pagamentos com cartão (PCI DSS) não permitem
     guardar o código de segurança (CVV) depois do pagamento, e o número do
     cartão só pode ser mostrado mascarado.
+
+    Contexto:
+      Dado que fiz login com a conta de cliente de demonstração
+      E que tenho no carrinho os produtos:
+        | quantidade | preço | CO2 |
+        |          1 | 10.00 | D   |
+      E que indico a morada sugerida para o código postal "1000-001" de "Portugal"
+      E que indico o distrito "Lisboa"
 
     @bug-conhecido @issue-14
     Esquema do Cenário: A fatura não mostra o código de segurança de um cartão com CVV de <algarismos> algarismos

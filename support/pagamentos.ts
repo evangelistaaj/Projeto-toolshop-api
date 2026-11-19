@@ -1,17 +1,25 @@
 import { defineParameterType } from '@cucumber/cucumber';
 import type { Pagamento } from './faturas';
 
-// Converte uma validade escrita no cenário ("daqui a 2 anos") no formato da API (MM/AAAA),
-// a partir da data de hoje. Assim os cenários nunca caducam.
+// Converte uma validade escrita no cenário no formato da API (MM/AAAA), a partir da data de hoje.
+// Formas aceites: "este mês", "o mês passado" e "daqui a N anos". Assim os cenários nunca caducam.
 export function validade(texto: string): string {
-  const hoje = new Date();
   const daquiA = texto.match(/^daqui a (\d+) anos?$/);
-  if (!daquiA) {
-    throw new Error(`Validade "${texto}" não reconhecida. Use, por exemplo, "daqui a 2 anos".`);
+  let meses: number;
+  if (texto === 'este mês') {
+    meses = 0;
+  } else if (texto === 'o mês passado') {
+    meses = -1;
+  } else if (daquiA) {
+    meses = Number(daquiA[1]) * 12;
+  } else {
+    throw new Error(`Validade "${texto}" não reconhecida. Use "este mês", "o mês passado" ou "daqui a N anos".`);
   }
-  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-  const ano = hoje.getFullYear() + Number(daquiA[1]);
-  return `${mes}/${ano}`;
+  // Conta em meses desde o ano 0, para não haver erros na passagem de ano (janeiro − 1 = dezembro do ano anterior).
+  const hoje = new Date();
+  const total = hoje.getFullYear() * 12 + hoje.getMonth() + meses;
+  const mes = String((total % 12) + 1).padStart(2, '0');
+  return `${mes}/${Math.floor(total / 12)}`;
 }
 
 // Dados válidos de exemplo de cada método, pelo nome usado no Gherkin.
@@ -56,3 +64,33 @@ defineParameterType({
     return { nome, ...pagamento };
   },
 });
+
+// Nome de cada campo de pagamento no Gherkin → nome do campo na API.
+const CAMPOS: Record<string, string> = {
+  'número': 'credit_card_number',
+  'validade': 'expiration_date',
+  'código de segurança': 'cvv',
+  'titular': 'card_holder_name',
+  'banco': 'bank_name',
+  'titular da conta': 'account_name',
+  'número da conta': 'account_number',
+  'número do cartão-oferta': 'gift_card_number',
+  'código de validação': 'validation_code',
+};
+
+// O nome na API de um campo escrito no Gherkin; falha com uma mensagem clara se não for conhecido.
+export function campoDaApi(nome: string): string {
+  const campo = CAMPOS[nome];
+  if (!campo) {
+    throw new Error(`Campo de pagamento "${nome}" desconhecido. Campos conhecidos: ${Object.keys(CAMPOS).join(', ')}.`);
+  }
+  return campo;
+}
+
+// Converte a tabela do cenário (campo | valor) nos dados de pagamento que a API espera.
+// A validade é escrita de forma relativa no cenário e convertida aqui.
+export function detalhesDoPagamento(tabela: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(tabela).map(([nome, valor]) => [campoDaApi(nome), nome === 'validade' ? validade(valor) : valor]),
+  );
+}
