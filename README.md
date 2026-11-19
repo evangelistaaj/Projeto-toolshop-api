@@ -128,7 +128,7 @@ Cada teste cria e apaga os seus próprios dados, por isso os testes passam com o
 
 ### 🔑 Contas de teste
 
-Os testes usam contas criadas pelos dados iniciais da Toolshop: um cliente (`customer2@practicesoftwaretesting.com`), um segundo cliente para os cenários de autorização (`customer3@practicesoftwaretesting.com`, que tem uma password diferente das outras) e o administrador. São credenciais públicas de uma aplicação de treino, definidas em `support/contas.ts`, e podem ser trocadas sem mexer no código:
+Os testes usam contas criadas pelos dados iniciais da Toolshop: um cliente (`customer2@practicesoftwaretesting.com`), um segundo cliente para os cenários de autorização (`customer3@practicesoftwaretesting.com`, que tem uma password diferente das outras) e o administrador. São credenciais públicas de uma aplicação de treino, definidas em `support/contas.ts`, e podem ser trocadas sem mexer no código: Os cenários de registo e de bloqueio de conta usam sempre **contas acabadas de registar** (nomes de `dados/clientes.json`, emails únicos em `@example.com`), que são apagadas no fim de cada cenário.
 
 | Variável | Para que serve |
 |---|---|
@@ -190,9 +190,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 89 | 55 | 34 | 0 | 19 |
+| 107 | 68 | 39 | 0 | 23 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 34 execuções a vermelho correspondem a **19 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (2: alterar o preço sem login e como cliente), #18 (2: estado da fatura de outro cliente e da própria) e #19 (1).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 39 execuções a vermelho correspondem a **23 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (2: alterar o preço sem login e como cliente), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1) e #23 (1).
 
 **O que já é verificado**
 
@@ -216,7 +216,7 @@ Funcionalidade: Catálogo de produtos
 | Pesquisa de morada | Morada completa na Alemanha, em Espanha e no Brasil | Código 200; rua, cidade e distrito preenchidos; país e código postal iguais aos pesquisados |
 | Pesquisa de morada 🐞 | Morada completa em Portugal, em França e no Reino Unido | O mesmo oráculo — **falha: distrito vazio** (bug [#2](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/2)) |
 | Pesquisa de morada 🐞 | País que não existe (código `XX`, reservado pela norma ISO 3166) | Código 422 — **falha: devolve 200 com uma morada americana** (bug [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3)) |
-| Pesquisa de morada 🐞 | Código postal português com formato inválido (`1000`) | Código 422 — **falha: devolve 200** (bug [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3)) |
+| Pesquisa de morada | Código postal português com formato inválido (`1000-01`; o formato é `0000` ou `0000-000`) | Código 422 |
 | Pesquisa de morada 🐞 | Argentina | O distrito é uma das 24 províncias argentinas (sem distinguir acentos nem maiúsculas) — **falha: devolve "Illinois"** (bug [#4](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/4)) |
 | Faturas | Comprar com a morada sugerida pelo código postal | Código 201; número `INV-…`; a fatura, consultada à parte, tem a morada enviada e uma linha com o produto, a quantidade, o preço unitário e o subtotal certos |
 | Faturas | Cidade que não corresponde ao código postal: a compra é recusada | Código 422; nenhuma fatura criada |
@@ -259,6 +259,20 @@ Funcionalidade: Catálogo de produtos
 | Autorização 🐞 | Alterar o preço de um produto sem login, e como cliente | Recusa, e o produto mantém o preço — **falha: 200, o preço muda** (bug [#17](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/17)) |
 | Autorização | Um cliente não consegue apagar um produto | Código 403, e o produto continua no catálogo |
 | Autorização 🐞 | Um cliente não consegue mudar o estado da sua própria fatura | Recusa, e a fatura não fica concluída — **falha: 200, aceite** (bug [#18](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/18)) |
+| Registo | Registo com dados válidos | Código 201; o login com a conta nova funciona; os dados da conta (`/users/me`) são os enviados |
+| Registo | Idade: fez 18 anos ontem, faz 75 anos amanhã (ainda 74) | Aceite |
+| Registo 🐞 | Idade: faz 18 anos hoje | Aceite — **falha: recusado** (bug [#20](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/20)) |
+| Registo | Idade: faz 18 anos amanhã | Recusado (422, só em `dob`) |
+| Registo 🐞 | Idade: faz 75 anos hoje, faz 80 anos hoje | Recusado — **falha: aceite; o limite real é 93 anos** (bug [#20](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/20)) |
+| Registo | Password sem maiúsculas, sem algarismos, sem símbolos, com 7 caracteres | 422, só em `password` |
+| Registo 🐞 | Email sem formato de email | 422 — **falha: aceite** (bug [#22](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/22)) |
+| Registo 🐞 | Código postal português inválido (`1000-01`) | 422 — **falha: aceite na versão publicada** (bug [#23](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/23)) |
+| Registo 🐞 | Registo sem data de nascimento | 422 — **falha: aceite** (bug [#21](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/21)) |
+| Registo | Email que já tem conta | **409** (conflito; decisão da Toolshop), com erro em `email` |
+| Registo | Registo a pedir o perfil de administrador | A conta fica cliente: perfil `user` no token, e a lista de utilizadores é recusada (403) |
+| Bloqueio de conta | Três tentativas falhadas | A 4.ª tentativa, com a password certa, dá 423 ("Account locked") |
+| Bloqueio de conta | Duas falhas e um login certo | O contador reinicia: mais duas falhas não bloqueiam |
+| Bloqueio de conta | Password errada | A resposta é igual à de um email que não existe (não revela que a conta existe) |
 | Pagamentos 🐞 | A fatura não mostra o código de segurança do cartão (CVV de 3 e de 4 algarismos) | Compra com cartão de crédito; a fatura tem o pagamento com cartão; nenhum campo com nome de código de segurança (`cvv`, `cvc`, `security_code`), a qualquer profundidade, tem valor — **falha: devolve `payment.payment_details.cvv`** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 | Pagamentos 🐞 | A fatura não mostra o número completo do cartão (dois números) | O número não aparece em lado nenhum da resposta, nem com hífenes nem só com algarismos (o número mascarado é aceite) — **falha: vem completo** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 
@@ -267,6 +281,8 @@ Funcionalidade: Catálogo de produtos
 > 🚦 Na Toolshop, os trabalhos em segundo plano (desconto de stock, email) são processados pelo agendador, que arranca o processador da fila uma vez por minuto. Às vezes esse processador fica ocupado mais de um minuto, e os minutos seguintes são saltados: uma compra podia esperar mais de 90 s, e o cenário falhava sem a API ter um bug. A causa provável está no código da Toolshop: a cada minuto, o `invoice:generate` põe na fila um PDF (`CreateInvoicePDF`, cerca de 0,7 s cada) para **todas** as faturas que ainda não o tenham, por isso, depois de muitas compras ou de uma reposição dos dados, a fila enche-se de PDF. Confirmado com um processador próprio a correr durante o teste: os trabalhos da compra foram processados em milissegundos, logo a seguir à compra.
 >
 > Por isso, o `npm run test:lento` arranca primeiro **o seu próprio processador da fila**, em segundo plano (`docker exec -d ... php artisan queue:work --max-time=300`), que se desliga sozinho ao fim de 5 minutos. O código que desconta o stock e envia o email continua a ser o da Toolshop; os cenários deixam só de depender do horário do agendador. O limite de 90 s mantém-se.
+
+> 🧭 **A fonte de verdade é a versão que corre.** O código-fonte da Toolshop no GitHub serve para encontrar suspeitas, mas a imagem publicada no Docker Hub pode ser mais antiga (foi assim com o código postal no registo, #23). Por isso, cada suspeita só vira issue depois de um teste a confirmar contra a aplicação real.
 
 > 🔐 Os cenários de autorização confirmam sempre duas coisas: o código de recusa (401, 403 ou 404; esconder que o recurso existe também é uma boa prática) e que **nada mudou** (o preço, o estado da fatura), consultado à parte. Uma API pode responder com uma recusa e alterar na mesma. O estado da fatura é verificado como "não fica concluída", e não "mantém o estado", porque a Toolshop avança os estados sozinha de 10 em 10 minutos (`order:update`). Para o cenário do PDF não depender do agendador, a preparação gera o PDF dessa fatura com o próprio código da Toolshop (`docker exec ... CreateInvoicePDF::dispatchSync`) e confirma que o dono o descarrega.
 
@@ -296,6 +312,7 @@ Funcionalidade: Catálogo de produtos
 - [x] Métodos de pagamento (registo de cada método, verificação dos dados, compra com dados inválidos e dados sensíveis do cartão)
 - [x] Massa de teste em ficheiros JSON (produtos com nomes de negócio, países, províncias e pagamentos)
 - [x] Autorização: dados de outros clientes e funções reservadas ao administrador (OWASP API1 e API5)
+- [x] Registo de cliente e bloqueio de conta
 - [x] Relatórios HTML
 - [x] Integração contínua (GitHub Actions), com a Toolshop em Docker
 
@@ -307,7 +324,7 @@ Funcionalidade: Catálogo de produtos
 |---|---|---|---|
 | [#1](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1) | `POST /products` cria produtos **sem autenticação**: devolve `201` em vez de `401` | 🔴 Alta (segurança) | Aberto |
 | [#2](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/2) | `GET /postcode-lookup` devolve o **distrito vazio** para Portugal, França e Reino Unido, e o distrito é obrigatório na fatura | 🟠 Média (impede compras com a morada sugerida) | Aberto |
-| [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3) | `GET /postcode-lookup` **aceita entradas inválidas** (país inexistente, código postal com formato errado) e inventa uma morada | 🟠 Média | Aberto |
+| [#3](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3) | `GET /postcode-lookup` **aceita um país que não existe** (`XX`) e inventa uma morada americana | 🟠 Média | Aberto |
 | [#4](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/4) | `GET /postcode-lookup` devolve **estados dos EUA** para moradas argentinas | 🟠 Média | Aberto |
 | [#5](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/5) | `POST /invoices` com uma cidade que não corresponde ao código postal: o erro aponta para o **país** e a mensagem engana | 🟠 Média (o cliente não sabe o que corrigir) | Aberto |
 | [#6](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/6) | `POST /invoices`: os erros de validação **não seguem o formato** do resto da API | 🟡 Baixa | Aberto |
@@ -324,6 +341,10 @@ Funcionalidade: Catálogo de produtos
 | [#17](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/17) | `PUT`/`PATCH /products/{id}` **sem autenticação nem autorização**: qualquer pessoa, mesmo sem login, altera os produtos e os preços | 🔴 Alta (segurança: OWASP API5) | Aberto |
 | [#18](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/18) | `PUT /invoices/{id}/status` **sem autorização**: qualquer cliente muda o estado de qualquer fatura, a sua e a de outros | 🔴 Alta (segurança: OWASP API1 e API5) | Aberto |
 | [#19](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/19) | `GET /invoices/{número}/download-pdf` **sem verificação do dono**: qualquer cliente descarrega o PDF da fatura de outro, e os números são sequenciais | 🔴 Alta (segurança: OWASP API1, dados pessoais) | Aberto |
+| [#20](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/20) | `POST /users/register`: **limites de idade errados**: quem faz 18 anos hoje é recusado, e o limite de 75 anos só funciona a partir dos 93 | 🟠 Média | Aberto |
+| [#21](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/21) | `POST /users/register` aceita registos **sem data de nascimento**: a idade nunca é verificada | 🟠 Média | Aberto |
+| [#22](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/22) | `POST /users/register` aceita **emails sem formato de email** | 🟠 Média | Aberto |
+| [#23](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/23) | `POST /users/register` **não valida o formato do código postal** na versão publicada (já corrigido no código-fonte) | 🟡 Baixa | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`. Quando só alguns exemplos de um esquema reproduzem um bug, ficam num bloco `Exemplos` à parte, com as tags e a descrição do bug, e os restantes continuam a correr normalmente.
 

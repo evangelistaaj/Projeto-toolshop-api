@@ -40,13 +40,10 @@ Funcionalidade: Pesquisa de morada por código postal
     Quando pesquiso a morada do código postal "123" num país que não existe
     Então recebo uma resposta com o código 422
 
-  @bug-conhecido @issue-3
-  Cenário: Pesquisar um código postal português com formato inválido
-    Bug: o registo exige o formato 0000-000 para Portugal, mas a pesquisa
-    aceita outros formatos.
-    https://github.com/evangelistaaj/Projeto-toolshop-api/issues/3
+  Cenário: Um código postal português com formato inválido é recusado
+    O formato português é 0000 ou 0000-000 (a própria Toolshop o define assim).
 
-    Quando pesquiso a morada do código postal "1000" em "Portugal"
+    Quando pesquiso a morada do código postal "1000-01" em "Portugal"
     Então recebo uma resposta com o código 422
 
   @bug-conhecido @issue-4

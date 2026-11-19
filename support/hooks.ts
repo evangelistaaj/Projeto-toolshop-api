@@ -3,6 +3,7 @@ import { request } from '@playwright/test';
 import type { MundoToolshop } from './world';
 import { apagarProdutos } from './produtos';
 import { apagarCarrinhos } from './carrinho';
+import { apagarClientes } from './clientes';
 import { contaAdmin, contaCliente, contaOutroCliente } from './contas';
 import { corpoSeguro } from './seguranca';
 
@@ -72,6 +73,9 @@ After(async function (this: MundoToolshop) {
   }
   if (this.api && this.carrinhosCriados.length > 0) {
     await apagarCarrinhos(this.api, this.carrinhosCriados);
+  }
+  if (this.api && this.clientesCriados.length > 0) {
+    await apagarClientes(this.api, this.clientesCriados);
   }
   await this.api?.dispose();
 });

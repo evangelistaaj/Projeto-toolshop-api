@@ -64,6 +64,13 @@ export class MundoToolshop extends World {
   // Preço do produto antes de uma tentativa de alteração, para confirmar que não mudou.
   precoOriginal?: number;
 
+  // Registo: dados enviados e a conta criada (email e password, para fazer login).
+  dadosDoRegisto?: import('./clientes').DadosCliente;
+  contaRegistada?: { id: string; email: string; password: string };
+
+  // Todas as contas registadas no cenário, para o hook After as apagar.
+  clientesCriados: string[] = [];
+
 }
 
 setWorldConstructor(MundoToolshop);
