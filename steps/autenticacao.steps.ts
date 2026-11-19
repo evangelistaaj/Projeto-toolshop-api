@@ -2,7 +2,9 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import type { MundoToolshop } from '../support/world';
 import { contaCliente, contaAdmin } from '../support/contas';
-import { fazerLogin } from '../support/autenticacao';
+import { fazerLogin, cabecalhosDeAutenticacao } from '../support/autenticacao';
+import { lerToken, tokenAlterado, tokenSemAssinatura, tokenAssinado } from '../support/jwt';
+import { segredoJwt } from '../support/toolshop-local';
 import { corpoSeguro } from '../support/seguranca';
 
 Given('que fiz login como administrador',
@@ -84,4 +86,60 @@ Then('vejo os dados da conta com que fiz login',
 
         // 3. Valores: é a conta com que fiz login, e não outra
         expect(conta.email, 'a conta devolvida deve ser a do login').toBe(this.emailLogin);
+    });
+
+// ---------- Tokens que não deviam servir ----------
+
+function tokenDoCenario(mundo: MundoToolshop): string {
+    if (!mundo.token) {
+        throw new Error('Este passo precisa de um token. Falta o passo "Dado que fiz login como cliente"?');
+    }
+    return mundo.token;
+}
+
+Given('que tenho o token {string}',
+    async function (this: MundoToolshop, token: string) {
+        this.token = token;
+    });
+
+Given('que alterei o meu token para ter o perfil de administrador',
+    async function (this: MundoToolshop) {
+        const token = tokenDoCenario(this);
+        // Ponto de partida: um token verdadeiro de cliente. Sem isto, o cenário não provava nada.
+        expect(lerToken(token).conteudo.role, 'o token original devia ser de cliente').toBe('user');
+        this.token = tokenAlterado(token, { role: 'admin' });
+    });
+
+Given('que retirei a assinatura do meu token',
+    async function (this: MundoToolshop) {
+        this.token = tokenSemAssinatura(tokenDoCenario(this));
+    });
+
+// Um token verdadeiro da conta, assinado com o segredo da Toolshop local, mas noutro
+// momento do tempo: assim não é preciso esperar 5 minutos para ele expirar. O exemplo
+// "ainda válido" prova que o token assim criado é aceite, e que a recusa do expirado
+// vem mesmo da validade e não da assinatura.
+Given(/^que tenho um token da minha conta que (expirou há|expira daqui a) (\d+) minutos?$/,
+    async function (this: MundoToolshop, quando: string, minutos: string) {
+        await fazerLogin(this, contaCliente.email, contaCliente.password);
+        expect(this.resposta!.status(), await corpoSeguro(this.resposta!)).toBe(200);
+
+        const agora = Math.floor(Date.now() / 1000);
+        const segundos = Number(minutos) * 60;
+        const expira = quando === 'expirou há' ? agora - segundos : agora + segundos;
+        // Emitido 5 minutos antes de expirar, como os tokens da Toolshop (ttl de 5 minutos).
+        const emitido = Math.min(expira - 300, agora);
+        this.token = tokenAssinado(this.token!, { iat: emitido, nbf: emitido, exp: expira }, segredoJwt());
+    });
+
+Given('que terminei a sessão',
+    async function (this: MundoToolshop) {
+        const resposta = await this.api.get('/users/logout', { headers: cabecalhosDeAutenticacao(this) });
+        expect(resposta.status(), await corpoSeguro(resposta)).toBe(200);
+        // O token continua guardado no cenário: é ele que vamos tentar usar a seguir.
+    });
+
+When('consulto a lista de clientes',
+    async function (this: MundoToolshop) {
+        this.resposta = await this.api.get('/users', { headers: cabecalhosDeAutenticacao(this) });
     });

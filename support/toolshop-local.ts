@@ -17,3 +17,21 @@ export function gerarPdfDaFatura(numero: string): void {
     { stdio: 'pipe', timeout: 60_000 },
   );
 }
+
+// O segredo com que a Toolshop local assina os tokens (configuração "jwt.secret").
+// Serve para os cenários criarem tokens noutro momento do tempo. Nunca é escrito
+// em registos nem em mensagens de erro. Só na Toolshop local.
+export function segredoJwt(): string {
+  const saida = execFileSync(
+    'docker',
+    ['exec', CONTENTOR, 'php', 'artisan', 'tinker', "--execute=echo config('jwt.secret');"],
+    { stdio: 'pipe', timeout: 60_000 },
+  ).toString();
+  // O PHP do contentor escreve um aviso ("Module FFI is already loaded") antes do valor:
+  // o segredo é a última linha com texto.
+  const segredo = saida.split(/\r?\n/).map((linha) => linha.trim()).filter(Boolean).pop();
+  if (!segredo || /warning/i.test(segredo)) {
+    throw new Error('Não consegui ler o segredo dos tokens da Toolshop local (config jwt.secret).');
+  }
+  return segredo;
+}
