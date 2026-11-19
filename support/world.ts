@@ -55,6 +55,15 @@ export class MundoToolshop extends World {
   // Dados do cartão com que se pagou a compra, para comparar com a fatura.
   cartaoDaCompra?: { numero: string; cvv: string };
 
+  // Autorização: a fatura de outro cliente (e o token dele, para a consultar como dono)
+  // e a fatura do próprio cliente do cenário.
+  faturaDoOutroCliente?: { id: string; numero: string };
+  tokenDoOutroCliente?: string;
+  minhaFatura?: { id: string; numero: string };
+
+  // Preço do produto antes de uma tentativa de alteração, para confirmar que não mudou.
+  precoOriginal?: number;
+
 }
 
 setWorldConstructor(MundoToolshop);

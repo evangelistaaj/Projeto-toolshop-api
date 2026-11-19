@@ -103,19 +103,23 @@ Cada teste cria e apaga os seus próprios dados, por isso os testes passam com o
 
 | Comando | O que faz |
 |---|---|
-| `npm run db:reset` | Repõe a base de dados da Toolshop local com os dados iniciais |
+| `npm run db:reset` | Repõe a base de dados da Toolshop local com os dados iniciais e apaga os PDF das faturas |
 | `npm run test:limpo` | Repõe os dados e corre todos os testes |
 
 > ⚠️ A reposição apaga **tudo** o que foi criado na Toolshop local, incluindo dados criados à mão na interface.
 
+> 📄 Os PDF das faturas ficam guardados em ficheiros, fora da base de dados, e a reposição da base de dados não os apaga. Como a numeração das faturas recomeça depois de uma reposição (ver bug #8), uma fatura nova podia ficar com o número de uma fatura antiga, e a Toolshop entregava o PDF antigo e não gerava o novo. Por isso, o `db:reset` corre também o `php artisan invoice:remove`, como a própria Toolshop faz de hora a hora no ambiente público.
+
 ### 🔑 Contas de teste
 
-Os testes usam a conta de cliente criada pelos dados iniciais da Toolshop (`customer2@practicesoftwaretesting.com`). São credenciais públicas de uma aplicação de treino, definidas em `support/contas.ts`, e podem ser trocadas sem mexer no código:
+Os testes usam contas criadas pelos dados iniciais da Toolshop: um cliente (`customer2@practicesoftwaretesting.com`), um segundo cliente para os cenários de autorização (`customer3@practicesoftwaretesting.com`, que tem uma password diferente das outras) e o administrador. São credenciais públicas de uma aplicação de treino, definidas em `support/contas.ts`, e podem ser trocadas sem mexer no código:
 
 | Variável | Para que serve |
 |---|---|
-| `CLIENTE_EMAIL` | Email da conta de cliente |
-| `CLIENTE_PASSWORD` | Password da conta de cliente |
+| `CLIENTE_EMAIL` / `CLIENTE_PASSWORD` | Conta de cliente |
+| `OUTRO_CLIENTE_EMAIL` / `OUTRO_CLIENTE_PASSWORD` | Segundo cliente ("o outro cliente") |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Conta de administrador |
+| `TOOLSHOP_CONTENTOR` | Contentor Docker da API local (por omissão `pst-laravel-api-1`), usado para gerar o PDF de uma fatura na preparação de um cenário |
 
 > 🔒 Tokens e passwords nunca aparecem nas mensagens de falha: são substituídos por `***` antes de serem mostrados (`support/seguranca.ts`).
 
@@ -169,9 +173,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 82 | 53 | 29 | 0 | 16 |
+| 89 | 55 | 34 | 0 | 19 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 29 execuções a vermelho correspondem a **16 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) e #16 (4: três cartões inválidos e uma conta com letras, numa compra).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 34 execuções a vermelho correspondem a **19 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (2: país inexistente e formato inválido), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (2: alterar o preço sem login e como cliente), #18 (2: estado da fatura de outro cliente e da própria) e #19 (1).
 
 **O que já é verificado**
 
@@ -232,14 +236,22 @@ Funcionalidade: Catálogo de produtos
 | Pagamentos | Verificação de um cartão-oferta: 16 caracteres e código de 4 (válido); número com 15 e com 17; código com 3 | 200; 422 só no campo alterado |
 | Pagamentos 🐞 | Comprar com um cartão inválido (número com letras, expirado, CVV com 2 algarismos) ou uma conta com letras | `POST /invoices`: código 422 e nenhuma fatura, como na verificação — **falha: a compra é aceite e cria a fatura** (bug [#16](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/16)) |
 | Pagamentos | Comprar com um cartão-oferta de 15 caracteres (controlo) | Código 422 e nenhuma fatura: a compra valida o cartão-oferta, o que prova que o teste distingue os dois comportamentos |
+| Autorização | Um cliente não consegue ver a fatura de outro cliente | Código 401, 403 ou 404, e a resposta não contém o número da fatura |
+| Autorização 🐞 | Um cliente não consegue mudar o estado da fatura de outro cliente | Recusa e, confirmado pelo dono, a fatura não fica concluída — **falha: 200, aceite** (bug [#18](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/18)) |
+| Autorização 🐞 | Um cliente não consegue descarregar o PDF da fatura de outro cliente | Depois de confirmar que o dono descarrega o PDF: recusa, e a resposta não é um PDF — **falha: entrega o PDF** (bug [#19](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/19)) |
+| Autorização 🐞 | Alterar o preço de um produto sem login, e como cliente | Recusa, e o produto mantém o preço — **falha: 200, o preço muda** (bug [#17](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/17)) |
+| Autorização | Um cliente não consegue apagar um produto | Código 403, e o produto continua no catálogo |
+| Autorização 🐞 | Um cliente não consegue mudar o estado da sua própria fatura | Recusa, e a fatura não fica concluída — **falha: 200, aceite** (bug [#18](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/18)) |
 | Pagamentos 🐞 | A fatura não mostra o código de segurança do cartão (CVV de 3 e de 4 algarismos) | Compra com cartão de crédito; a fatura tem o pagamento com cartão; nenhum campo com nome de código de segurança (`cvv`, `cvc`, `security_code`), a qualquer profundidade, tem valor — **falha: devolve `payment.payment_details.cvv`** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 | Pagamentos 🐞 | A fatura não mostra o número completo do cartão (dois números) | O número não aparece em lado nenhum da resposta, nem com hífenes nem só com algarismos (o número mascarado é aceite) — **falha: vem completo** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 
 > ⏳ O stock é descontado em segundo plano, por um agendador que corre uma vez por minuto. Os cenários lentos **repetem a verificação** de 5 em 5 segundos até o resultado aparecer (no máximo 90 s), sem esperas fixas. Antes de cada compra, confirma-se que o produto começa disponível: sem isso, "fica esgotado" passaria sem provar nada.
 
-> 🚦 Na Toolshop, os trabalhos em segundo plano (desconto de stock, email) são processados pelo agendador, que arranca o processador da fila uma vez por minuto. Às vezes esse processador fica ocupado mais de um minuto (por exemplo, a gerar os PDF das faturas que a Toolshop cria sozinha), e os minutos seguintes são saltados: uma compra podia esperar mais de 90 s, e o cenário falhava sem a API ter um bug. Confirmado com um processador próprio a correr durante o teste: os trabalhos da compra foram processados em milissegundos, logo a seguir à compra.
+> 🚦 Na Toolshop, os trabalhos em segundo plano (desconto de stock, email) são processados pelo agendador, que arranca o processador da fila uma vez por minuto. Às vezes esse processador fica ocupado mais de um minuto, e os minutos seguintes são saltados: uma compra podia esperar mais de 90 s, e o cenário falhava sem a API ter um bug. A causa provável está no código da Toolshop: a cada minuto, o `invoice:generate` põe na fila um PDF (`CreateInvoicePDF`, cerca de 0,7 s cada) para **todas** as faturas que ainda não o tenham, por isso, depois de muitas compras ou de uma reposição dos dados, a fila enche-se de PDF. Confirmado com um processador próprio a correr durante o teste: os trabalhos da compra foram processados em milissegundos, logo a seguir à compra.
 >
 > Por isso, o `npm run test:lento` arranca primeiro **o seu próprio processador da fila**, em segundo plano (`docker exec -d ... php artisan queue:work --max-time=300`), que se desliga sozinho ao fim de 5 minutos. O código que desconta o stock e envia o email continua a ser o da Toolshop; os cenários deixam só de depender do horário do agendador. O limite de 90 s mantém-se.
+
+> 🔐 Os cenários de autorização confirmam sempre duas coisas: o código de recusa (401, 403 ou 404; esconder que o recurso existe também é uma boa prática) e que **nada mudou** (o preço, o estado da fatura), consultado à parte. Uma API pode responder com uma recusa e alterar na mesma. O estado da fatura é verificado como "não fica concluída", e não "mantém o estado", porque a Toolshop avança os estados sozinha de 10 em 10 minutos (`order:update`). Para o cenário do PDF não depender do agendador, a preparação gera o PDF dessa fatura com o próprio código da Toolshop (`docker exec ... CreateInvoicePDF::dispatchSync`) e confirma que o dono o descarrega.
 
 > 🌱 A regra do desconto ecológico não está documentada: veio do código-fonte da Toolshop (`InvoiceService`). Os cenários testam as partições (só ecológicos, nenhum, maioria) e os limites (exatamente metade; B conta, C não), cada um com produtos e preços criados pelo próprio cenário, para que as contas não dependam dos dados iniciais. Os valores de dinheiro são comparados em **cêntimos inteiros**, para não haver erros de vírgula flutuante, e o subtotal de 10.10 foi escolhido por ser um limite de arredondamento: 5% dá exatamente meio cêntimo (0.505).
 
@@ -266,6 +278,7 @@ Funcionalidade: Catálogo de produtos
 - [x] Email de confirmação da compra (servidor de email de testes)
 - [x] Métodos de pagamento (registo de cada método, verificação dos dados, compra com dados inválidos e dados sensíveis do cartão)
 - [x] Massa de teste em ficheiros JSON (produtos com nomes de negócio, países, províncias e pagamentos)
+- [x] Autorização: dados de outros clientes e funções reservadas ao administrador (OWASP API1 e API5)
 - [ ] Relatórios e integração contínua
 
 ---
@@ -290,6 +303,9 @@ Funcionalidade: Catálogo de produtos
 | [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14) | `GET /invoices/{id}` devolve os **dados do cartão completos, incluindo o CVV**: a API guarda o código de segurança e o número sem mascarar | 🔴 Alta (segurança: exposição de dados de pagamento, contra o PCI DSS) | Aberto |
 | [#15](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/15) | `POST /payment/check` **recusa cartões no mês da validade**: `MM/AAAA` é lido como o dia 1 desse mês | 🟠 Média (impede pagamentos com cartões válidos) | Aberto |
 | [#16](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/16) | `POST /invoices` **não valida os dados do pagamento** (só o cartão-oferta): aceita compras com cartões expirados ou inválidos e contas com letras | 🔴 Alta (compras aceites com meios de pagamento inválidos) | Aberto |
+| [#17](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/17) | `PUT`/`PATCH /products/{id}` **sem autenticação nem autorização**: qualquer pessoa, mesmo sem login, altera os produtos e os preços | 🔴 Alta (segurança: OWASP API5) | Aberto |
+| [#18](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/18) | `PUT /invoices/{id}/status` **sem autorização**: qualquer cliente muda o estado de qualquer fatura, a sua e a de outros | 🔴 Alta (segurança: OWASP API1 e API5) | Aberto |
+| [#19](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/19) | `GET /invoices/{número}/download-pdf` **sem verificação do dono**: qualquer cliente descarrega o PDF da fatura de outro, e os números são sequenciais | 🔴 Alta (segurança: OWASP API1, dados pessoais) | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`. Quando só alguns exemplos de um esquema reproduzem um bug, ficam num bloco `Exemplos` à parte, com as tags e a descrição do bug, e os restantes continuam a correr normalmente.
 

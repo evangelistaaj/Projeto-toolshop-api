@@ -46,7 +46,8 @@ export async function dadosDeProdutoValidos(
   return {
     // Nome único: o email de confirmação é encontrado pelos nomes dos produtos.
     name: `${produto.nome} - ref. ${referenciaUnica()}`,
-    description: produto.descricao,
+    // Se o cenário der outro nome, a descrição do catálogo deixaria de lhe corresponder.
+    description: alteracoes.name ? 'Tool from the Toolshop catalog.' : produto.descricao,
     price: 9.99,
     category_id: await primeiroId(api, '/categories'),
     brand_id: await primeiroId(api, '/brands'),

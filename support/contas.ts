@@ -12,3 +12,10 @@ export const contaAdmin = {
   password: process.env.ADMIN_PASSWORD ?? 'welcome01',
 };
 
+// Um segundo cliente, para os cenários de autorização ("o outro cliente").
+// Atenção: nos dados iniciais da Toolshop (UserSeeder), esta conta tem uma password
+// diferente das outras. Só faz logins com sucesso, por isso nunca fica bloqueada.
+export const contaOutroCliente = {
+  email: process.env.OUTRO_CLIENTE_EMAIL ?? 'customer3@practicesoftwaretesting.com',
+  password: process.env.OUTRO_CLIENTE_PASSWORD ?? 'pass123',
+};
