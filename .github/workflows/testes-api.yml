@@ -1,0 +1,97 @@
+# Integração contínua: arranca a Toolshop em Docker (a mesma do ambiente local),
+# corre os três perfis de testes e publica os relatórios.
+name: Testes da API
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: # permite correr à mão, no separador Actions
+
+# Uma execução de cada vez por ramo: um push novo cancela a que estiver a correr.
+concurrency:
+  group: testes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      # Variáveis do docker-compose da Toolshop.
+      SPRINT: sprint5
+      DISABLE_LOGGING: 'true'
+
+    steps:
+      - name: Obter o projeto de testes
+        uses: actions/checkout@v6
+
+      - name: Obter a Toolshop (Practice Software Testing)
+        uses: actions/checkout@v6
+        with:
+          repository: testsmith-io/practice-software-testing
+          path: pst
+
+      # O nome do projeto (-p pst) dá os nomes dos contentores (pst-laravel-api-1...),
+      # os mesmos do ambiente local. A interface (angular-ui) não é precisa.
+      - name: Arrancar a Toolshop (API, servidor web, agendador e base de dados)
+        working-directory: pst
+        run: docker compose -f docker-compose.prod.yml -p pst up -d laravel-api web cron mariadb
+
+      - name: Arrancar o servidor de email de testes (MailCatcher)
+        run: >
+          docker run -d --name pst-mailcatcher --network pst_default --network-alias mailcatcher
+          -p 1080:1080 dockage/mailcatcher:0.9.0
+
+      - name: Esperar pela base de dados
+        run: |
+          for i in $(seq 1 60); do
+            if docker exec pst-mariadb-1 mysqladmin ping -h localhost -u root -proot --silent; then exit 0; fi
+            sleep 2
+          done
+          docker logs pst-mariadb-1
+          exit 1
+
+      - name: Instalar o Node.js (versão do .nvmrc)
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalar as dependências
+        run: npm ci
+
+      - name: Verificar os tipos (TypeScript)
+        run: npm run typecheck
+
+      - name: Repor os dados da Toolshop
+        run: npm run db:reset
+
+      - name: Esperar pela API
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8091/status > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          docker logs pst-laravel-api-1
+          exit 1
+
+      - name: Cenários normais
+        run: npm test
+
+      - name: Cenários lentos
+        run: npm run test:lento
+
+      # Os bugs conhecidos falham de propósito: correm para o relatório, sem pôr a pipeline a vermelho.
+      - name: Bugs conhecidos (informativo)
+        if: always()
+        continue-on-error: true
+        run: npm run test:bugs
+
+      - name: Publicar os relatórios
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: relatorios
+          path: resultados/
+          if-no-files-found: warn

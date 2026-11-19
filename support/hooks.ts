@@ -3,10 +3,16 @@ import { request } from '@playwright/test';
 import type { MundoToolshop } from './world';
 import { apagarProdutos } from './produtos';
 import { apagarCarrinhos } from './carrinho';
+import { contaAdmin, contaCliente, contaOutroCliente } from './contas';
+import { corpoSeguro } from './seguranca';
 
 // Endereço da API: por omissão a Toolshop local; pode ser trocado
 // com a variável de ambiente API_URL.
 const API_URL = process.env.API_URL ?? 'http://localhost:8091';
+
+// Na Toolshop local correm todos os cenários; noutro endereço, só os que não criam dados
+// (a mesma regra do cucumber.js, que exclui os @so-local).
+const EH_LOCAL = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(API_URL);
 
 // Tempo máximo de cada passo (o Cucumber usa 5 s por omissão). Numa máquina de
 // integração contínua os pedidos são mais lentos, e um passo de 5,1 s falharia
@@ -23,10 +29,28 @@ BeforeAll(async function () {
       throw new Error(`HTTP ${resposta.status()}`);
     }
   } catch (erro) {
+    await api.dispose();
     throw new Error(
       `A API da Toolshop não responde em ${API_URL} (${(erro as Error).message}). ` +
         'Está a correr? Ver "Como executar" no README.',
     );
+  }
+
+  // Confirma que as contas que esta execução vai usar fazem login. Uma password errada
+  // falharia em todos os cenários dessa conta, e à 3.ª falha a Toolshop bloqueia a conta:
+  // assim gasta-se uma só tentativa e a execução pára logo, com a conta indicada.
+  const contas = EH_LOCAL ? [contaCliente, contaOutroCliente, contaAdmin] : [contaCliente];
+  try {
+    for (const conta of contas) {
+      const login = await api.post('/users/login', { data: conta });
+      if (login.status() !== 200) {
+        throw new Error(
+          `O login da conta ${conta.email} falhou (HTTP ${login.status()}: ${await corpoSeguro(login)}). ` +
+            'Confirme as credenciais em support/contas.ts ou nas variáveis de ambiente (ver README, "Contas de teste"). ' +
+            'Se a conta ficou bloqueada, "npm run db:reset" repõe-na.',
+        );
+      }
+    }
   } finally {
     await api.dispose();
   }

@@ -2,6 +2,7 @@
 
 Testes automatizados da API da **Toolshop** ([Practice Software Testing](https://practicesoftwaretesting.com)), escritos em **Gherkin em português** e executados com **Cucumber + Playwright + TypeScript**.
 
+[![Testes da API](https://github.com/evangelistaaj/Projeto-toolshop-api/actions/workflows/testes-api.yml/badge.svg)](https://github.com/evangelistaaj/Projeto-toolshop-api/actions/workflows/testes-api.yml)
 ![Estado](https://img.shields.io/badge/estado-em%20constru%C3%A7%C3%A3o-yellow)
 ![Node](https://img.shields.io/badge/node-26-339933?logo=nodedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/typescript-7-3178C6?logo=typescript&logoColor=white)
@@ -75,6 +76,19 @@ A versão do Node.js está em `.nvmrc` e no campo `engines` do `package.json`.
 | `npm run typecheck` | Verifica os tipos do TypeScript em todo o projeto, sem correr os testes |
 | `npx cucumber-js -p bugs --tags @issue-5` | Só os cenários de um bug (cada um tem a tag do seu issue). O `-p bugs` é preciso: as tags da linha de comandos juntam-se às do perfil, e o perfil normal exclui os bugs conhecidos |
 
+### 🤖 Integração contínua
+
+A cada `push` para o `main` (e em cada pull request), o GitHub Actions (`.github/workflows/testes-api.yml`):
+
+1. arranca a Toolshop em Docker, com o mesmo `docker-compose.prod.yml` do ambiente local, e o servidor de email de testes;
+2. instala as dependências e verifica os tipos do TypeScript;
+3. repõe os dados da Toolshop;
+4. corre os cenários normais e os lentos (se algum falhar, a execução fica a vermelho);
+5. corre os bugs conhecidos, só para o relatório (falham de propósito e não põem a execução a vermelho);
+6. publica os relatórios HTML como artefacto (`relatorios`), na página de cada execução, no separador **Actions**.
+
+Também pode ser corrida à mão, no separador **Actions** → *Testes da API* → *Run workflow*.
+
 ### 📊 Relatórios
 
 Cada execução grava um relatório HTML na pasta `resultados/` (ignorada pelo Git), com cada cenário, os seus passos e as mensagens de falha:
@@ -136,6 +150,7 @@ support/     World (estado de cada cenário), hooks (preparação e limpeza),
 dados/       Massa de teste em JSON: produtos, países, províncias e pagamentos
 cucumber.js  Configuração do Cucumber
 .vscode/     Configuração da extensão Cucumber do VS Code (navegação e autocompletar dos passos)
+.github/     Integração contínua (GitHub Actions)
 ```
 
 ### 🧪 Massa de teste
@@ -279,7 +294,8 @@ Funcionalidade: Catálogo de produtos
 - [x] Métodos de pagamento (registo de cada método, verificação dos dados, compra com dados inválidos e dados sensíveis do cartão)
 - [x] Massa de teste em ficheiros JSON (produtos com nomes de negócio, países, províncias e pagamentos)
 - [x] Autorização: dados de outros clientes e funções reservadas ao administrador (OWASP API1 e API5)
-- [ ] Relatórios e integração contínua
+- [x] Relatórios HTML
+- [ ] Integração contínua (GitHub Actions) *(em curso)*
 
 ---
 
