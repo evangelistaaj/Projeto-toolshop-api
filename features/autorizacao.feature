@@ -248,3 +248,30 @@ Funcionalidade: Autorização
     Cenário: A pesquisa de faturas de um cliente só encontra as suas faturas
       Quando consulto a pesquisa de faturas
       Então só recebo faturas minhas
+
+  Regra: Um cliente não acede aos favoritos de outro cliente
+
+    Contexto:
+      Dado que outro cliente tem um produto nos favoritos
+      E que fiz login como cliente
+
+    Cenário: A lista de favoritos de um cliente não tem os favoritos de outro
+      Quando consulto a lista dos meus favoritos
+      Então a lista não tem o favorito do outro cliente
+
+    @bug-conhecido @issue-34
+    Cenário: Um cliente não consegue ver um favorito de outro cliente
+      Bug: um favorito de outro cliente é mostrado a quem souber o id.
+      https://github.com/evangelistaaj/Projeto-toolshop-api/issues/34
+
+      Quando consulto o favorito do outro cliente
+      Então o favorito não me é mostrado
+
+    @bug-conhecido @issue-34
+    Cenário: Um cliente não consegue apagar um favorito de outro cliente
+      Bug: o pedido responde 204, como se tivesse apagado, mas o favorito continua.
+      https://github.com/evangelistaaj/Projeto-toolshop-api/issues/34
+
+      Quando apago o favorito do outro cliente
+      Então a alteração é recusada
+      E o favorito do outro cliente continua a existir

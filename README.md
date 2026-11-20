@@ -9,9 +9,9 @@ Testes automatizados da API da **Toolshop** ([Practice Software Testing](https:/
 ![Cucumber](https://img.shields.io/badge/cucumber-13-23D96C?logo=cucumber&logoColor=white)
 ![Playwright](https://img.shields.io/badge/playwright-1.65-2EAD33?logo=playwright&logoColor=white)
 
-> **Em resumo:** testes de API REST de uma loja online, escritos em **Gherkin (português)** e automatizados com **Cucumber + Playwright + TypeScript**. Destaques: World e hooks, dados próprios em cada cenário (criados e apagados pela API), testes de segurança (autorização, tokens e dados de cartão), contratos das respostas com **JSON Schema**, a loja a correr em **Docker** na CI, e **30 issues** reportados (27 bugs e 3 desvios da documentação), cada um com um cenário que o reproduz.
+> **Em resumo:** testes de API REST de uma loja online, escritos em **Gherkin (português)** e automatizados com **Cucumber + Playwright + TypeScript**. Destaques: World e hooks, dados próprios em cada cenário (criados e apagados pela API), testes de segurança (autorização, tokens e dados de cartão), contratos das respostas com **JSON Schema**, a loja a correr em **Docker** na CI, e **34 issues** reportados (31 bugs e 3 desvios da documentação), cada um com um cenário que o reproduz.
 >
-> 🇬🇧 **In short:** REST API test suite for an e-commerce demo app, written in Gherkin (Portuguese) and automated with Cucumber + Playwright + TypeScript. Highlights: World and hooks, self-contained test data, security tests (authorization, tokens, card data), JSON Schema response contracts, the app running in Docker in CI, and 30 reported issues (27 bugs and 3 documentation mismatches), each with a scenario that reproduces it.
+> 🇬🇧 **In short:** REST API test suite for an e-commerce demo app, written in Gherkin (Portuguese) and automated with Cucumber + Playwright + TypeScript. Highlights: World and hooks, self-contained test data, security tests (authorization, tokens, card data), JSON Schema response contracts, the app running in Docker in CI, and 34 reported issues (31 bugs and 3 documentation mismatches), each with a scenario that reproduces it.
 
 > 🚧 **Projeto em construção.** Este README acompanha o estado real do repositório: só descreve o que já está feito.
 
@@ -168,9 +168,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 174 | 112 | 62 | 0 | 30 |
+| 184 | 117 | 67 | 0 | 34 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 62 execuções a vermelho correspondem a **30 issues** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (4: alterar o preço sem login e como cliente, com `PUT` e com `PATCH`), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1), #23 (1), #24 (2: lista de produtos e detalhe de um produto), #25 (1), #26 (1), #27 (1), #28 (3: pesquisa sem termo, sentido de ordenação e preço que não é um número), #29 (1) e #30 (12: criar e alterar marcas e categorias, sem login e como cliente, com `PUT` e `PATCH`).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 67 execuções a vermelho correspondem a **34 issues** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (4: alterar o preço sem login e como cliente, com `PUT` e com `PATCH`), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1), #23 (1), #24 (2: lista de produtos e detalhe de um produto), #25 (1), #26 (1), #27 (1), #28 (3: pesquisa sem termo, sentido de ordenação e preço que não é um número), #29 (1), #30 (12: criar e alterar marcas e categorias, sem login e como cliente, com `PUT` e `PATCH`), #31 (1), #32 (1), #33 (1) e #34 (2: ver e apagar o favorito de outro cliente).
 
 **O que já é verificado**
 
@@ -264,6 +264,13 @@ Funcionalidade: Catálogo de produtos
 | Autorização | Um cliente não consegue apagar uma marca ou uma categoria | 403, e continua a existir |
 | Autorização | Os 7 relatórios de vendas (`/reports/*`), como cliente | 403 |
 | Autorização | A lista e a pesquisa de faturas de um cliente, todas as páginas | Só faturas do próprio; a fatura de outro cliente, criada no cenário, não aparece |
+| Autorização | A lista de favoritos de um cliente | Não tem os favoritos de outro cliente |
+| Autorização 🐞 | Ver e apagar o favorito de outro cliente | Recusado — **falha: ver dá 200; apagar dá 204 sem apagar** (bug [#34](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/34)) |
+| Password | Mudar a password com dados válidos | Entra com a nova e não com a antiga (conta criada no cenário) |
+| Password | Mudar a password com a atual errada, com a confirmação diferente ou com uma password fraca | 400/422, e a password não muda |
+| Password 🐞 | A sessão de antes de mudar a password | 401 — **falha: o token antigo continua válido** (bug [#33](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/33)) |
+| Password 🐞 | Pedir uma nova password (`forgot-password`), sem login | A password não muda — **falha: passa a ser `welcome02`; qualquer pessoa toma qualquer conta só com o email** (bug [#31](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/31)) |
+| Password 🐞 | Pedir uma nova password para um email com conta e para um sem conta | Respostas iguais — **falha: 200 vs 422, revela quem tem conta** (bug [#32](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/32)) |
 | Registo | Registo com dados válidos | Código 201; o login com a conta nova funciona; os dados da conta (`/users/me`) são os enviados |
 | Registo | Idade: fez 18 anos ontem, faz 75 anos amanhã (ainda 74) | Aceite |
 | Registo 🐞 | Idade: faz 18 anos hoje | Aceite — **falha: recusado** (bug [#20](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/20)) |
@@ -357,6 +364,10 @@ Funcionalidade: Catálogo de produtos
 | [#28](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/28) | Catálogo: **parâmetros fora do Swagger aceites em silêncio** (pesquisa sem termo, sentido de ordenação inválido, preço que não é um número lido como 0) | 🟡 Baixa | Aberto |
 | [#29](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/29) | `GET /users/search` **mostra a um cliente os dados pessoais de todos os outros** (nome, email, telefone, data de nascimento e morada), embora a lista e a consulta individual estejam protegidas | 🔴 Alta (segurança: OWASP API1 e API3, dados pessoais) | Aberto |
 | [#30](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/30) | Marcas e categorias: **criar e alterar não exigem login nem perfil de administrador** (`POST`, `PUT` e `PATCH`); só apagar está protegido | 🔴 Alta (segurança: OWASP API5) | Aberto |
+| [#31](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/31) | `POST /users/forgot-password`, **sem login, muda a password de qualquer conta para `welcome02`**: qualquer pessoa toma qualquer conta só com o email | 🔴 Alta (segurança: OWASP API2, tomada de contas) | Aberto |
+| [#32](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/32) | `POST /users/forgot-password` **revela quais emails têm conta** (200 vs 422) | 🟠 Média (segurança: enumeração de contas) | Aberto |
+| [#33](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/33) | `POST /users/change-password`: **o token de antes da alteração continua válido** | 🟠 Média (segurança) | Aberto |
+| [#34](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/34) | Favoritos: um cliente **vê o favorito de outro** pelo id, e o `DELETE` responde 204 sem apagar | 🟡 Baixa (segurança: OWASP API1) | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`. Quando só alguns exemplos de um esquema reproduzem um bug, ficam num bloco `Exemplos` à parte, com as tags e a descrição do bug, e os restantes continuam a correr normalmente.
 
@@ -443,6 +454,7 @@ Os dados que são o **tema** de um cenário (por exemplo, o código postal pesqu
 - [x] Métodos de pagamento (registo de cada método, verificação dos dados, compra com dados inválidos e dados sensíveis do cartão)
 - [x] Massa de teste em ficheiros JSON (produtos com nomes de negócio, países, províncias e pagamentos)
 - [x] Autorização: dados de outros clientes e funções reservadas ao administrador (OWASP API1 e API5)
+- [x] Password: alteração e recuperação; favoritos, marcas, categorias, relatórios e lista de faturas (autorização)
 - [x] Registo de cliente e bloqueio de conta
 - [x] Tokens inválidos: alterado, sem assinatura, expirado e depois do logout
 - [x] Catálogo: paginação, pesquisa, filtros e ordenação
@@ -454,7 +466,7 @@ Os dados que são o **tema** de um cenário (por exemplo, o código postal pesqu
 
 ### 💡 Próximos passos
 
-- Endpoints do Swagger ainda sem testes, por ordem de risco: alteração e recuperação de password, favoritos
+- Endpoints do Swagger ainda sem testes: renovação do token (`/users/refresh`, incluindo depois de mudar a password), autenticação de dois fatores (TOTP), compra sem conta (`/invoices/guest`) e especificações de produto
 - Reescrever este projeto em **Java + REST Assured + Cucumber-JVM**, como segunda stack do portfolio
 
 ---

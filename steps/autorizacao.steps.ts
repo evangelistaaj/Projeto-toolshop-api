@@ -181,15 +181,20 @@ function comMeuToken(mundo: MundoToolshop) {
 }
 
 Given('que outro cliente tem conta na loja', async function (this: MundoToolshop) {
+  await criarOutroCliente(this);
+});
+
+// Regista e entra com uma conta nova para o "outro cliente" (apagada no fim, no hook After).
+async function criarOutroCliente(mundo: MundoToolshop) {
   const dados = dadosDeClienteValidos();
-  const registo = await this.api.post('/users/register', { data: dados });
+  const registo = await mundo.api.post('/users/register', { data: dados });
   expect(registo.status(), `registo do outro cliente: ${await corpoSeguro(registo)}`).toBe(201);
   const id = (await registo.json()).id;
-  this.clientesCriados.push(id);
-  const login = await this.api.post('/users/login', { data: { email: dados.email, password: dados.password } });
+  mundo.clientesCriados.push(id);
+  const login = await mundo.api.post('/users/login', { data: { email: dados.email, password: dados.password } });
   expect(login.status(), `login do outro cliente: ${await corpoSeguro(login)}`).toBe(200);
-  this.outroCliente = { id, token: (await login.json()).access_token, dados };
-});
+  mundo.outroCliente = { id, token: (await login.json()).access_token, dados };
+}
 
 When('consulto os dados do outro cliente', async function (this: MundoToolshop) {
   this.resposta = await this.api.get(`/users/${outroCliente(this).id}`, { headers: comMeuToken(this) });
@@ -354,4 +359,56 @@ Then('só recebo faturas minhas', async function (this: MundoToolshop) {
   const deOutros = faturas.filter((f) => f.dono !== meuId).map((f) => f.numero);
   expect(deOutros, 'faturas de outros clientes na lista').toEqual([]);
   expect(faturas.map((f) => f.numero), 'a fatura do outro cliente').not.toContain(faturaDoOutroCliente(this).numero);
+});
+
+// ---------- Favoritos ----------
+
+Given('que outro cliente tem um produto nos favoritos', async function (this: MundoToolshop) {
+  await criarOutroCliente(this);
+  const { token } = this.outroCliente!;
+  const produto = (await (await this.api.get('/products')).json()).data[0].id;
+  const favorito = await this.api.post('/favorites', { data: { product_id: produto }, headers: { Authorization: `Bearer ${token}` } });
+  expect(favorito.status(), await corpoSeguro(favorito)).toBe(201);
+  const id = (await favorito.json()).id;
+  this.favoritoDoOutroCliente = id;
+  // Só o dono apaga o favorito; tem de ser antes de a conta ser apagada.
+  this.limpezas.push(() => this.api.delete(`/favorites/${id}`, { headers: { Authorization: `Bearer ${token}` } }));
+});
+
+function favoritoDoOutro(mundo: MundoToolshop) {
+  if (!mundo.favoritoDoOutroCliente) throw new Error('Este passo precisa de um favorito do outro cliente ("que outro cliente tem um produto nos favoritos").');
+  return mundo.favoritoDoOutroCliente;
+}
+
+When('consulto o favorito do outro cliente', async function (this: MundoToolshop) {
+  this.resposta = await this.api.get(`/favorites/${favoritoDoOutro(this)}`, { headers: comMeuToken(this) });
+});
+
+When('apago o favorito do outro cliente', async function (this: MundoToolshop) {
+  this.resposta = await this.api.delete(`/favorites/${favoritoDoOutro(this)}`, { headers: comMeuToken(this) });
+});
+
+When('consulto a lista dos meus favoritos', async function (this: MundoToolshop) {
+  this.resposta = await this.api.get('/favorites', { headers: comMeuToken(this) });
+});
+
+Then('o favorito não me é mostrado', async function (this: MundoToolshop) {
+  expect(CODIGOS_DE_RECUSA, `código de recusa esperado; veio ${this.resposta!.status()}: ${await corpoSeguro(this.resposta!)}`)
+    .toContain(this.resposta!.status());
+});
+
+Then('a lista não tem o favorito do outro cliente', async function (this: MundoToolshop) {
+  expect(this.resposta!.status(), await corpoSeguro(this.resposta!)).toBe(200);
+  const ids = (await this.resposta!.json()).map((f: { id: string }) => f.id);
+  expect(ids, 'favoritos na minha lista').not.toContain(favoritoDoOutro(this));
+});
+
+// Confirmado pelo dono, com um endereço único (as respostas de GET vêm de cache).
+Then('o favorito do outro cliente continua a existir', async function (this: MundoToolshop) {
+  const consulta = await this.api.get('/favorites', {
+    params: { semcache: Date.now().toString() },
+    headers: { Authorization: `Bearer ${outroCliente(this).token}` },
+  });
+  expect(consulta.status(), await corpoSeguro(consulta)).toBe(200);
+  expect((await consulta.json()).map((f: { id: string }) => f.id), 'favoritos do outro cliente').toContain(favoritoDoOutro(this));
 });

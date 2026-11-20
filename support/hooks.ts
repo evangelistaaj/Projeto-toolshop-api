@@ -69,6 +69,7 @@ Before(async function (this: MundoToolshop) {
 
 After(async function (this: MundoToolshop) {
   // Limpeza: apaga o que o cenário criou, antes de fechar o cliente HTTP.
+  for (const limpeza of this.limpezas ?? []) await limpeza();
   if (this.api && this.produtosCriados.length > 0) {
     await apagarProdutos(this.api, this.produtosCriados);
   }

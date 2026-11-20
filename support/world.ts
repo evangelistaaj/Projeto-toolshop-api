@@ -81,6 +81,19 @@ export class MundoToolshop extends World {
   nomeTentado?: string;
   registosCriados: { endereco: string; id: string }[] = [];
 
+  // Password: a da conta antes de a mudar, o token dessa sessão e as respostas da
+  // recuperação de password (para um email com conta e outro sem conta).
+  passwordAntiga?: string;
+  tokenAntigo?: string;
+  respostasDaRecuperacao?: { comConta: { codigo: number; corpo: string }; semConta: { codigo: number; corpo: string } };
+
+  // Favoritos: o favorito do outro cliente.
+  favoritoDoOutroCliente?: string;
+
+  // Limpezas que só o dono pode fazer (ex.: o favorito do outro cliente), corridas no
+  // hook After antes de apagar as contas.
+  limpezas: (() => Promise<unknown>)[] = [];
+
   // Faturas recebidas numa lista ou pesquisa (número e dono), de todas as páginas.
   faturasRecebidas: { numero: string; dono: string }[] = [];
 
