@@ -69,6 +69,19 @@ When('altero o preço do produto para {float}',
     });
   });
 
+// PUT substitui o produto inteiro (todos os dados, com o preço novo);
+// PATCH altera só os campos enviados (aqui, só o preço).
+When(/^altero o preço do produto para (\d+\.\d{2}) com um pedido (PUT|PATCH)$/,
+  async function (this: MundoToolshop, preco: string, pedido: 'PUT' | 'PATCH') {
+    if (!this.produtoId || !this.dadosEnviados) {
+      throw new Error('Este passo precisa de um produto criado antes ("que existe um produto na loja").');
+    }
+    const opcoes = { headers: cabecalhosDeAutenticacao(this) };
+    this.resposta = pedido === 'PUT'
+      ? await this.api.put(`/products/${this.produtoId}`, { ...opcoes, data: { ...this.dadosEnviados, price: Number(preco) } })
+      : await this.api.patch(`/products/${this.produtoId}`, { ...opcoes, data: { price: Number(preco) } });
+  });
+
 Then('o produto passa a ter o preço {float}',
   async function (this: MundoToolshop, preco: number) {
     if (!this.resposta || !this.produtoId) {

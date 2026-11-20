@@ -40,26 +40,38 @@ Funcionalidade: Autorização
 
   Regra: Só o administrador gere os produtos e o estado das faturas
 
+    # A API tem duas formas de alterar um produto: PUT (envia o produto inteiro)
+    # e PATCH (envia só os campos que mudam). As duas têm de exigir o administrador.
     @bug-conhecido @issue-17
-    Cenário: Alterar o preço de um produto sem login é recusado
+    Esquema do Cenário: Alterar o preço de um produto sem login é recusado (pedido <pedido>)
       Bug: a alteração de produtos não exige login nem perfil de administrador.
       https://github.com/evangelistaaj/Projeto-toolshop-api/issues/17
 
       Dado que existe um produto na loja
-      Quando altero o preço do produto para 1.00
+      Quando altero o preço do produto para 1.00 com um pedido <pedido>
       Então a alteração é recusada
       E o produto mantém o preço
 
+      Exemplos:
+        | pedido |
+        | PUT    |
+        | PATCH  |
+
     @bug-conhecido @issue-17
-    Cenário: Um cliente não consegue alterar o preço de um produto
+    Esquema do Cenário: Um cliente não consegue alterar o preço de um produto (pedido <pedido>)
       Bug: a alteração de produtos não exige perfil de administrador.
       https://github.com/evangelistaaj/Projeto-toolshop-api/issues/17
 
       Dado que existe um produto na loja
       E que fiz login como cliente
-      Quando altero o preço do produto para 1.00
+      Quando altero o preço do produto para 1.00 com um pedido <pedido>
       Então a alteração é recusada
       E o produto mantém o preço
+
+      Exemplos:
+        | pedido |
+        | PUT    |
+        | PATCH  |
 
     Cenário: Um cliente não consegue apagar um produto
       Dado que existe um produto na loja

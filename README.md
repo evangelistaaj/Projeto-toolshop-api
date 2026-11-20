@@ -168,9 +168,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 119 | 80 | 39 | 0 | 23 |
+| 121 | 80 | 41 | 0 | 23 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 39 execuções a vermelho correspondem a **23 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (2: alterar o preço sem login e como cliente), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1) e #23 (1).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 41 execuções a vermelho correspondem a **23 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (4: alterar o preço sem login e como cliente, com `PUT` e com `PATCH`), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1) e #23 (1).
 
 **O que já é verificado**
 
@@ -244,7 +244,7 @@ Funcionalidade: Catálogo de produtos
 | Autorização | Um cliente não consegue ver a fatura de outro cliente | Código 401, 403 ou 404, e a resposta não contém o número da fatura |
 | Autorização 🐞 | Um cliente não consegue mudar o estado da fatura de outro cliente | Recusa e, confirmado pelo dono, a fatura não fica concluída — **falha: 200, aceite** (bug [#18](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/18)) |
 | Autorização 🐞 | Um cliente não consegue descarregar o PDF da fatura de outro cliente | Depois de confirmar que o dono descarrega o PDF: recusa, e a resposta não é um PDF — **falha: entrega o PDF** (bug [#19](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/19)) |
-| Autorização 🐞 | Alterar o preço de um produto sem login, e como cliente | Recusa, e o produto mantém o preço — **falha: 200, o preço muda** (bug [#17](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/17)) |
+| Autorização 🐞 | Alterar o preço de um produto sem login, e como cliente, com `PUT` (o produto inteiro) e com `PATCH` (só o preço) | Recusa, e o produto mantém o preço — **falha: 200, o preço muda** (bug [#17](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/17)) |
 | Autorização | Um cliente não consegue apagar um produto | Código 403, e o produto continua no catálogo |
 | Autorização 🐞 | Um cliente não consegue mudar o estado da sua própria fatura | Recusa, e a fatura não fica concluída — **falha: 200, aceite** (bug [#18](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/18)) |
 | Registo | Registo com dados válidos | Código 201; o login com a conta nova funciona; os dados da conta (`/users/me`) são os enviados |
