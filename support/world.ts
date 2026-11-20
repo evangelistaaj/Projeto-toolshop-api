@@ -71,6 +71,10 @@ export class MundoToolshop extends World {
   tokenDoOutroCliente?: string;
   minhaFatura?: { id: string; numero: string };
 
+  // Autorização: outro cliente, com conta criada no cenário (e apagada no fim), o token
+  // dele e os dados com que se registou, para confirmar que nada mudou.
+  outroCliente?: { id: string; token: string; dados: import('./clientes').DadosCliente };
+
   // Preço do produto antes de uma tentativa de alteração, para confirmar que não mudou.
   precoOriginal?: number;
 

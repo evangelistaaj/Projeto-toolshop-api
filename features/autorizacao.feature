@@ -90,3 +90,48 @@ Funcionalidade: Autorização
       Quando marco a minha fatura como concluída
       Então a alteração é recusada
       E a minha fatura não fica concluída
+
+  Regra: Um cliente não acede aos dados de outros clientes
+    Os dados de uma conta (nome, email, telefone, data de nascimento e morada) são
+    pessoais. A lista de clientes já é só para o administrador; nenhum outro caminho
+    os pode mostrar a um cliente.
+
+    Contexto:
+      Dado que outro cliente tem conta na loja
+      E que fiz login como cliente
+
+    Cenário: Um cliente não consegue ver os dados de outro cliente
+      Quando consulto os dados do outro cliente
+      Então os dados do outro cliente não me são mostrados
+
+    @bug-conhecido @issue-29
+    Cenário: Um cliente não encontra outros clientes na pesquisa de utilizadores
+      Bug: a pesquisa de utilizadores mostra a um cliente os dados pessoais dos outros.
+      https://github.com/evangelistaaj/Projeto-toolshop-api/issues/29
+
+      Quando pesquiso clientes pelo apelido do outro cliente
+      Então os dados do outro cliente não me são mostrados
+
+    Esquema do Cenário: Um cliente não consegue alterar os dados de outro cliente (pedido <pedido>)
+      Quando altero o nome do outro cliente com um pedido <pedido>
+      Então a alteração é recusada
+      E os dados do outro cliente ficam como estavam
+
+      Exemplos:
+        | pedido |
+        | PUT    |
+        | PATCH  |
+
+    Cenário: Um cliente não consegue apagar a conta de outro cliente
+      Quando apago a conta do outro cliente
+      Então a alteração é recusada
+      E a conta do outro cliente continua a existir
+
+  Regra: Um cliente não se torna administrador
+    O perfil de uma conta só muda pela mão do administrador. O registo já ignora um
+    pedido de perfil de administrador; a alteração da própria conta também.
+
+    Cenário: Pedir o perfil de administrador numa alteração à própria conta não muda o perfil
+      Dado que tenho uma conta registada
+      Quando peço o perfil de administrador numa alteração à minha conta
+      Então a conta registada tem o perfil de cliente
