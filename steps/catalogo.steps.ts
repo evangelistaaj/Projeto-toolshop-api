@@ -56,6 +56,14 @@ async function pagina(mundo: MundoToolshop, numero: number, sort?: string) {
   return { resposta, corpo: await resposta.json() };
 }
 
+// Um produto qualquer do catálogo (o primeiro da primeira página), pelo endereço do produto
+When('consulto um produto do catálogo',
+  async function (this: MundoToolshop) {
+    const { corpo } = await pagina(this, 1);
+    expect(corpo.data.length, 'o catálogo devia ter produtos').toBeGreaterThan(0);
+    this.resposta = await this.api.get(`/products/${corpo.data[0].id}`);
+  });
+
 When('consulto a página {int} do catálogo',
   async function (this: MundoToolshop, numero: number) {
     this.resposta = await this.api.get('/products', { params: { page: numero } });

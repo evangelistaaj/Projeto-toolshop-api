@@ -1,0 +1,41 @@
+{
+  "$id": "fatura",
+  "$comment": "Fonte: Swagger, GET /invoices/{invoiceId}, resposta 200 (InvoiceResponse e InvoiceLineResponse). Todos os campos documentados são tratados como prometidos; campos a mais são permitidos.",
+  "type": "object",
+  "required": ["id", "user_id", "invoice_date", "invoice_number", "billing_street", "billing_city", "billing_country", "billing_state", "billing_postal_code", "additional_discount_percentage", "additional_discount_amount", "subtotal", "total", "status", "status_message", "invoicelines", "created_at"],
+  "properties": {
+    "id": { "type": "string" },
+    "user_id": { "type": "string" },
+    "invoice_date": { "type": "string" },
+    "invoice_number": { "type": "string" },
+    "billing_street": { "type": "string" },
+    "billing_city": { "type": "string" },
+    "billing_country": { "type": "string" },
+    "billing_state": { "type": "string" },
+    "billing_postal_code": { "type": "string" },
+    "additional_discount_percentage": { "type": "number" },
+    "additional_discount_amount": { "type": "number" },
+    "subtotal": { "type": "number" },
+    "total": { "type": "number" },
+    "status": { "type": "string" },
+    "status_message": { "type": "string" },
+    "created_at": { "type": "string" },
+    "invoicelines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "invoice_id", "product_id", "unit_price", "discount_percentage", "discounted_price", "quantity", "product"],
+        "properties": {
+          "id": { "type": "string" },
+          "invoice_id": { "type": "string" },
+          "product_id": { "type": "string" },
+          "unit_price": { "type": "number" },
+          "discount_percentage": { "type": "number" },
+          "discounted_price": { "type": "number" },
+          "quantity": { "type": "integer" },
+          "product": { "$ref": "produto" }
+        }
+      }
+    }
+  }
+}

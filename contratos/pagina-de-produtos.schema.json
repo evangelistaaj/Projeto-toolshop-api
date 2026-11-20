@@ -1,0 +1,15 @@
+{
+  "$id": "pagina-de-produtos",
+  "$comment": "Fonte: Swagger, GET /products, resposta 200 (PaginatedProductResponse). Cada produto segue o contrato produto.",
+  "type": "object",
+  "required": ["current_page", "data", "from", "last_page", "per_page", "to", "total"],
+  "properties": {
+    "current_page": { "type": "integer" },
+    "data": { "type": "array", "items": { "$ref": "produto" } },
+    "from": { "type": "integer" },
+    "last_page": { "type": "integer" },
+    "per_page": { "type": "integer" },
+    "to": { "type": "integer" },
+    "total": { "type": "integer" }
+  }
+}

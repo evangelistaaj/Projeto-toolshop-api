@@ -1,0 +1,51 @@
+{
+  "$id": "produto",
+  "$comment": "Fonte: Swagger, components.schemas.ProductResponse (e BrandResponse, CategoryResponse, ImageResponse). Todos os campos documentados são tratados como prometidos; campos a mais são permitidos; null só onde o Swagger o permite.",
+  "type": "object",
+  "required": ["id", "name", "description", "price", "is_location_offer", "is_rental", "in_stock", "co2_rating", "is_eco_friendly", "brand", "category", "product_image"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "price": { "type": "number" },
+    "is_location_offer": { "type": "boolean" },
+    "is_rental": { "type": "boolean" },
+    "in_stock": { "type": "boolean" },
+    "co2_rating": { "type": "string" },
+    "is_eco_friendly": { "type": "boolean" },
+    "brand": { "$ref": "#/$defs/marca" },
+    "category": { "$ref": "#/$defs/categoria" },
+    "product_image": { "$ref": "#/$defs/imagem" }
+  },
+  "$defs": {
+    "marca": {
+      "type": "object",
+      "required": ["id", "name", "slug"],
+      "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "slug": { "type": "string" } }
+    },
+    "categoria": {
+      "type": "object",
+      "required": ["id", "parent_id", "name", "slug", "sub_categories"],
+      "properties": {
+        "id": { "type": "string" },
+        "parent_id": { "type": ["string", "null"] },
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "sub_categories": { "type": "array", "items": { "$ref": "#/$defs/categoria" } }
+      }
+    },
+    "imagem": {
+      "type": "object",
+      "required": ["id", "by_name", "by_url", "source_name", "source_url", "file_name", "title"],
+      "properties": {
+        "id": { "type": "string" },
+        "by_name": { "type": "string" },
+        "by_url": { "type": "string" },
+        "source_name": { "type": "string" },
+        "source_url": { "type": "string" },
+        "file_name": { "type": "string" },
+        "title": { "type": "string" }
+      }
+    }
+  }
+}

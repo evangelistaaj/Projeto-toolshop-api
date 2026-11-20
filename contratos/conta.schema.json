@@ -1,0 +1,32 @@
+{
+  "$id": "conta",
+  "$comment": "Fonte: Swagger, GET /users/me, resposta 200 (UserResponse). Todos os campos documentados são tratados como prometidos; null só onde o Swagger o permite. Regra de segurança acrescentada: a password nunca pode vir na resposta.",
+  "type": "object",
+  "required": ["id", "first_name", "last_name", "email", "dob", "phone", "address", "provider", "totp_enabled", "enabled", "failed_login_attempts", "created_at"],
+  "not": { "required": ["password"] },
+  "properties": {
+    "id": { "type": "string" },
+    "first_name": { "type": "string" },
+    "last_name": { "type": "string" },
+    "email": { "type": "string" },
+    "dob": { "type": "string" },
+    "phone": { "type": ["string", "null"] },
+    "address": {
+      "type": "object",
+      "required": ["street", "house_number", "city", "state", "country", "postal_code"],
+      "properties": {
+        "street": { "type": "string" },
+        "house_number": { "type": ["string", "null"] },
+        "city": { "type": "string" },
+        "state": { "type": ["string", "null"] },
+        "country": { "type": "string" },
+        "postal_code": { "type": ["string", "null"] }
+      }
+    },
+    "provider": { "type": ["string", "null"] },
+    "totp_enabled": { "type": "boolean" },
+    "enabled": { "type": "boolean" },
+    "failed_login_attempts": { "type": ["integer", "null"] },
+    "created_at": { "type": "string" }
+  }
+}

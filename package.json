@@ -23,6 +23,7 @@
     "@cucumber/cucumber": "^13.3.0",
     "@playwright/test": "^1.65.0",
     "@types/node": "^26.6.6",
+    "ajv": "^8.20.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }

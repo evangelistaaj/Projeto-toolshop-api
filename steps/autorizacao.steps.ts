@@ -85,6 +85,12 @@ Given('que existe um produto na loja', async function (this: MundoToolshop) {
 
 // ---------- Ações ----------
 
+When('consulto a minha fatura', async function (this: MundoToolshop) {
+  this.resposta = await this.api.get(`/invoices/${minhaFatura(this).id}`, {
+    headers: cabecalhosDeAutenticacao(this),
+  });
+});
+
 When('consulto a fatura do outro cliente', async function (this: MundoToolshop) {
   this.resposta = await this.api.get(`/invoices/${faturaDoOutroCliente(this).id}`, {
     headers: cabecalhosDeAutenticacao(this),

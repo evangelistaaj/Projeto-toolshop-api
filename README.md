@@ -9,9 +9,9 @@ Testes automatizados da API da **Toolshop** ([Practice Software Testing](https:/
 ![Cucumber](https://img.shields.io/badge/cucumber-13-23D96C?logo=cucumber&logoColor=white)
 ![Playwright](https://img.shields.io/badge/playwright-1.65-2EAD33?logo=playwright&logoColor=white)
 
-> **Em resumo:** testes de API REST de uma loja online, escritos em **Gherkin (português)** e automatizados com **Cucumber + Playwright + TypeScript**. Destaques: World e hooks, dados próprios em cada cenário (criados e apagados pela API), testes de segurança (autorização, tokens e dados de cartão), a loja a correr em **Docker** na CI, e **23 bugs** reportados, cada um com um cenário que o reproduz.
+> **Em resumo:** testes de API REST de uma loja online, escritos em **Gherkin (português)** e automatizados com **Cucumber + Playwright + TypeScript**. Destaques: World e hooks, dados próprios em cada cenário (criados e apagados pela API), testes de segurança (autorização, tokens e dados de cartão), contratos das respostas com **JSON Schema**, a loja a correr em **Docker** na CI, e **26 issues** reportados (23 bugs e 3 desvios da documentação), cada um com um cenário que o reproduz.
 >
-> 🇬🇧 **In short:** REST API test suite for an e-commerce demo app, written in Gherkin (Portuguese) and automated with Cucumber + Playwright + TypeScript. Highlights: World and hooks, self-contained test data, security tests (authorization, tokens, card data), the app running in Docker in CI, and 23 reported bugs, each with a scenario that reproduces it.
+> 🇬🇧 **In short:** REST API test suite for an e-commerce demo app, written in Gherkin (Portuguese) and automated with Cucumber + Playwright + TypeScript. Highlights: World and hooks, self-contained test data, security tests (authorization, tokens, card data), JSON Schema response contracts, the app running in Docker in CI, and 26 reported issues (23 bugs and 3 documentation mismatches), each with a scenario that reproduces it.
 
 > 🚧 **Projeto em construção.** Este README acompanha o estado real do repositório: só descreve o que já está feito.
 
@@ -78,7 +78,7 @@ A versão do Node.js está em `.nvmrc` e no campo `engines` do `package.json`.
 | `npm run test:bugs` | Só os cenários que reproduzem bugs conhecidos (`@bug-conhecido`), com o resumo das falhas em `resultados/bugs.txt`. Arranca antes um processador da fila, como o `test:lento` |
 | `npm run test:limpo` | Repõe os dados da Toolshop local e corre `npm test` |
 | `npm run typecheck` | Verifica os tipos do TypeScript em todo o projeto, sem correr os testes |
-| `npm run test:unit` | Testes unitários das verificações, das funções de apoio e do resumo das falhas (menos de 1 s, sem Toolshop) |
+| `npm run test:unit` | Testes unitários das verificações, das funções de apoio, do resumo das falhas e da tradução dos desvios de contrato (menos de 1 s, sem Toolshop) |
 | `npx cucumber-js -p bugs --tags @issue-5` | Só os cenários de um bug (cada um tem a tag do seu issue). O `-p bugs` é preciso: as tags da linha de comandos juntam-se às do perfil, e o perfil normal exclui os bugs conhecidos |
 
 ### 🤖 Integração contínua
@@ -168,9 +168,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 121 | 80 | 41 | 0 | 23 |
+| 126 | 81 | 45 | 0 | 26 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 41 execuções a vermelho correspondem a **23 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (4: alterar o preço sem login e como cliente, com `PUT` e com `PATCH`), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1) e #23 (1).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 45 execuções a vermelho correspondem a **26 issues** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (4: alterar o preço sem login e como cliente, com `PUT` e com `PATCH`), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1), #23 (1), #24 (2: lista de produtos e detalhe de um produto), #25 (1) e #26 (1).
 
 **O que já é verificado**
 
@@ -261,6 +261,10 @@ Funcionalidade: Catálogo de produtos
 | Bloqueio de conta | Três tentativas falhadas | A 4.ª tentativa, com a password certa, dá 423 ("Account locked") |
 | Bloqueio de conta | Duas falhas e um login certo | O contador reinicia: mais duas falhas não bloqueiam |
 | Bloqueio de conta | Password errada | A resposta é igual à de um email que não existe (não revela que a conta existe) |
+| Contrato | O token do login segue o contrato | A resposta tem a forma documentada no Swagger (`contratos/token.schema.json`) |
+| Contrato 🐞 | A lista de produtos e um produto seguem o contrato | Forma do Swagger — **falha: a marca e a categoria vêm reduzidas** (desvio [#24](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/24)) |
+| Contrato 🐞 | Os dados da conta seguem o contrato | Forma do Swagger — **falha: faltam `enabled` e `failed_login_attempts`** (desvio [#25](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/25)) |
+| Contrato 🐞 (local) | Uma fatura segue o contrato | Forma do Swagger — **falha: `null` em campos numéricos e produto reduzido em cada linha** (desvio [#26](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/26)) |
 
 ---
 
@@ -277,6 +281,8 @@ Funcionalidade: Catálogo de produtos
 > O `test:bugs` precisa dele pela mesma razão, e com uma consequência pior: os cenários dos bugs do email (#11 e #12) chegaram a falhar por o email **não chegar a tempo**, em vez de falharem na verificação do bug. Um cenário de bug que falha pela razão errada esconde se o bug ainda existe: se o bug fosse corrigido, o cenário continuava vermelho, e ninguém dava por isso.
 
 > 🧪 **Testar os testes.** As verificações mais delicadas (dados de cartão expostos, produtos repetidos entre páginas), os tokens alterados e as datas relativas vivem em funções próprias (`support/oraculos.ts`, `support/jwt.ts`, `support/datas.ts`) e têm testes unitários com dados inventados (`npm run test:unit`): cada verificação é posta à prova com um caso que tem de apanhar e um controlo que tem de deixar passar. Para confirmar que estes testes têm valor, o código foi sabotado de propósito (por exemplo, `repetidos` a nunca encontrar nada); uma das sabotagens não foi apanhada à primeira, e isso levou a um teste novo. As datas usam um relógio simulado: incluem a passagem de ano, o 29 de fevereiro e o fuso horário.
+
+> 📐 **Contratos das respostas.** A forma de cada resposta (campos, tipos e onde pode vir `null`) é comparada com o Swagger da Toolshop, copiado para `contratos/*.schema.json` e validado com o `ajv` (`support/contratos.ts`). Campos a mais são permitidos, porque não partem um cliente; campos em falta ou com outro tipo não. A mensagem de falha aponta o campo e o problema **sem mostrar valores** (podem ser dados pessoais) e junta os desvios repetidos numa lista (`/data/*/brand: falta o campo "slug" (9×)`). Como o Swagger não marca nenhum campo como obrigatório, a decisão foi tratar todos os campos documentados como prometidos; os desvios encontrados ficaram reportados como documentação (#24 a #26), com severidade baixa. A tradução das mensagens do `ajv` tem testes unitários.
 
 > 🖥️ **Terminal limpo.** O Cucumber usa um formatter próprio (`support/formatador-limpo.cjs`): um sinal por cenário enquanto corre e, no fim, cada falha num bloco curto, com o cenário, o ficheiro e a linha, o passo que falhou e o erro **sem a pilha do `node_modules`**, e um resumo (`✓ 78 a passar   ✗ 0 a falhar`). A limpeza da mensagem é uma função pura (`support/resumo-de-falha.cjs`) com testes unitários. O relatório HTML continua com tudo.
 
@@ -327,6 +333,9 @@ Funcionalidade: Catálogo de produtos
 | [#21](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/21) | `POST /users/register` aceita registos **sem data de nascimento**: a idade nunca é verificada | 🟠 Média | Aberto |
 | [#22](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/22) | `POST /users/register` aceita **emails sem formato de email** | 🟠 Média | Aberto |
 | [#23](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/23) | `POST /users/register` **não valida o formato do código postal** na versão publicada (já corrigido no código-fonte) | 🟡 Baixa | Aberto |
+| [#24](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/24) | Documentação: em `GET /products` e `GET /products/{id}`, **a marca e a categoria vêm reduzidas** (faltam `slug`, `parent_id`, `sub_categories`) em relação ao Swagger | 🟡 Baixa | Aberto |
+| [#25](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/25) | Documentação: `GET /users/me` **não traz `enabled` nem `failed_login_attempts`**, que o Swagger documenta | 🟡 Baixa | Aberto |
+| [#26](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/26) | Documentação: `GET /invoices/{id}` traz **`null` em campos que o Swagger dá como número ou texto**, e um produto reduzido em cada linha | 🟡 Baixa | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`. Quando só alguns exemplos de um esquema reproduzem um bug, ficam num bloco `Exemplos` à parte, com as tags e a descrição do bug, e os restantes continuam a correr normalmente.
 
@@ -367,8 +376,10 @@ support/     world.ts e hooks.ts      estado de cada cenário, preparação e li
                                       carrinho, compras e consulta das faturas
              oraculos.ts, datas.ts    verificações e datas relativas (testadas à parte)
              seguranca.ts             tokens e passwords escondidos nas mensagens
+             contratos.ts             validação das respostas contra os contratos
              toolshop-local.ts        comandos na Toolshop local (docker exec)
 dados/       Massa de teste em JSON: produtos, clientes, países, províncias e pagamentos
+contratos/   Contratos das respostas em JSON Schema, a partir do Swagger (validados com o ajv)
 testes/      Testes unitários das verificações e das funções de apoio (node:test)
 cucumber.js  Configuração do Cucumber: perfis normal, lento e bugs
 .nvmrc       Versão do Node.js
@@ -411,13 +422,13 @@ Os dados que são o **tema** de um cenário (por exemplo, o código postal pesqu
 - [x] Relatórios HTML
 - [x] Integração contínua (GitHub Actions), com a Toolshop em Docker
 - [x] Testes unitários das verificações e das funções de apoio, com sabotagens a confirmar que falham quando devem
+- [x] Mensagens de falha legíveis no terminal (formatter próprio)
+- [x] Contrato das respostas com JSON Schema (`ajv`), a partir do Swagger
 
 ### 💡 Próximos passos
 
-- Contrato das respostas com JSON Schema (`ajv`)
 - Catálogo: pesquisa, filtros e ordenação
 - Endpoints do Swagger ainda sem testes, por ordem de risco: utilizadores (ver e alterar outros, `role`), marcas e categorias sem login, relatórios, lista de faturas, alteração e recuperação de password, favoritos
-- Mensagens de falha mais legíveis no terminal
 - Reescrever este projeto em **Java + REST Assured + Cucumber-JVM**, como segunda stack do portfolio
 
 ---

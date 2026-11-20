@@ -1,0 +1,11 @@
+{
+  "$id": "token",
+  "$comment": "Fonte: Swagger, POST /users/login, resposta 200 (TokenResponse). Todos os campos documentados são tratados como prometidos; campos a mais são permitidos.",
+  "type": "object",
+  "required": ["access_token", "token_type", "expires_in"],
+  "properties": {
+    "access_token": { "type": "string" },
+    "token_type": { "type": "string" },
+    "expires_in": { "type": "number" }
+  }
+}
