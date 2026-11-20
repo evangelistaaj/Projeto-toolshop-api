@@ -14,7 +14,7 @@
   },
   "keywords": [],
   "author": "Arthur Evangelista",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "engines": {
     "node": ">=26"

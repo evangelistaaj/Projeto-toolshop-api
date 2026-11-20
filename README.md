@@ -98,6 +98,8 @@ Também pode ser corrida à mão, no separador **Actions** → *Testes da API* �
 
 ### 📊 Relatórios
 
+> 🌐 Os relatórios da última execução da CI no `main` estão publicados no GitHub Pages: **[evangelistaaj.github.io/Projeto-toolshop-api](https://evangelistaaj.github.io/Projeto-toolshop-api/)** (cenários normais, lentos e bugs conhecidos).
+
 Cada execução grava um relatório HTML na pasta `resultados/` (ignorada pelo Git), com cada cenário, os seus passos e as mensagens de falha:
 
 | Comando | Relatório |
@@ -474,3 +476,5 @@ Os dados que são o **tema** de um cenário (por exemplo, o código postal pesqu
 ## 👤 Autor
 
 **Arthur Evangelista** · [GitHub](https://github.com/evangelistaaj)
+
+Licença [MIT](LICENSE): podes ler, usar e adaptar o código, mantendo a referência ao autor.
