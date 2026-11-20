@@ -4,6 +4,7 @@ import type { MundoToolshop } from './world';
 import { apagarProdutos } from './produtos';
 import { apagarCarrinhos } from './carrinho';
 import { apagarClientes } from './clientes';
+import { tokenDeAdministrador } from './autenticacao';
 import { contaAdmin, contaCliente, contaOutroCliente } from './contas';
 import { corpoSeguro } from './seguranca';
 
@@ -76,6 +77,13 @@ After(async function (this: MundoToolshop) {
   }
   if (this.api && this.clientesCriados.length > 0) {
     await apagarClientes(this.api, this.clientesCriados);
+  }
+  // Marcas e categorias criadas no cenário (pelo administrador, ou por um bug).
+  if (this.api && this.registosCriados.length > 0) {
+    const token = await tokenDeAdministrador(this.api);
+    for (const { endereco, id } of this.registosCriados) {
+      await this.api.delete(`${endereco}/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+    }
   }
   await this.api?.dispose();
 });

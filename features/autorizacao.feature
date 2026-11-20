@@ -135,3 +135,116 @@ Funcionalidade: Autorização
       Dado que tenho uma conta registada
       Quando peço o perfil de administrador numa alteração à minha conta
       Então a conta registada tem o perfil de cliente
+
+  Regra: Só o administrador gere as marcas e as categorias
+    Como nos produtos (#1 e #17): criar e alterar também têm de exigir o administrador,
+    e não só apagar.
+
+    @bug-conhecido @issue-30
+    Esquema do Cenário: Criar uma <recurso> sem login é recusado
+      Bug: a criação de marcas e categorias não exige login nem perfil de administrador.
+      https://github.com/evangelistaaj/Projeto-toolshop-api/issues/30
+
+      Quando crio uma <recurso>
+      Então a criação é recusada
+      E a <recurso> não fica criada
+
+      Exemplos:
+        | recurso   |
+        | marca     |
+        | categoria |
+
+    @bug-conhecido @issue-30
+    Esquema do Cenário: Um cliente não consegue criar uma <recurso>
+      Bug: a criação de marcas e categorias não exige perfil de administrador.
+      https://github.com/evangelistaaj/Projeto-toolshop-api/issues/30
+
+      Dado que fiz login como cliente
+      Quando crio uma <recurso>
+      Então a criação é recusada
+      E a <recurso> não fica criada
+
+      Exemplos:
+        | recurso   |
+        | marca     |
+        | categoria |
+
+    @bug-conhecido @issue-30
+    Esquema do Cenário: Alterar o nome de uma <recurso> sem login é recusado (pedido <pedido>)
+      Bug: a alteração de marcas e categorias não exige login nem perfil de administrador.
+      https://github.com/evangelistaaj/Projeto-toolshop-api/issues/30
+
+      Dado que existe uma <recurso> na loja
+      Quando altero o nome da <recurso> com um pedido <pedido>
+      Então a alteração é recusada
+      E a <recurso> mantém o nome
+
+      Exemplos:
+        | recurso   | pedido |
+        | marca     | PUT    |
+        | marca     | PATCH  |
+        | categoria | PUT    |
+        | categoria | PATCH  |
+
+    @bug-conhecido @issue-30
+    Esquema do Cenário: Um cliente não consegue alterar o nome de uma <recurso> (pedido <pedido>)
+      Bug: a alteração de marcas e categorias não exige perfil de administrador.
+      https://github.com/evangelistaaj/Projeto-toolshop-api/issues/30
+
+      Dado que existe uma <recurso> na loja
+      E que fiz login como cliente
+      Quando altero o nome da <recurso> com um pedido <pedido>
+      Então a alteração é recusada
+      E a <recurso> mantém o nome
+
+      Exemplos:
+        | recurso   | pedido |
+        | marca     | PUT    |
+        | marca     | PATCH  |
+        | categoria | PUT    |
+        | categoria | PATCH  |
+
+    Esquema do Cenário: Um cliente não consegue apagar uma <recurso>
+      Dado que existe uma <recurso> na loja
+      E que fiz login como cliente
+      Quando apago a <recurso>
+      Então a alteração é recusada
+      E a <recurso> continua a existir
+
+      Exemplos:
+        | recurso   |
+        | marca     |
+        | categoria |
+
+  Regra: Os relatórios de vendas são só para o administrador
+
+    Esquema do Cenário: Um cliente não consegue ver o relatório <relatorio>
+      Dado que fiz login como cliente
+      Quando consulto o relatório "<relatorio>"
+      Então o relatório não me é mostrado
+
+      Exemplos:
+        | relatorio                     |
+        | total-sales-per-country       |
+        | top10-purchased-products      |
+        | top10-best-selling-categories |
+        | total-sales-of-years          |
+        | average-sales-per-month       |
+        | average-sales-per-week        |
+        | customers-by-country          |
+
+  Regra: Um cliente só vê as suas faturas na lista e na pesquisa de faturas
+    Percorre todas as páginas: todas as faturas têm de ser do cliente, e a do outro
+    cliente não pode aparecer.
+
+    Contexto:
+      Dado que outro cliente fez uma compra
+      E que fiz login como cliente
+
+    Cenário: A lista de faturas de um cliente só tem as suas faturas
+      Quando consulto a lista das minhas faturas
+      Então só recebo faturas minhas
+
+    Cenário: A pesquisa de faturas de um cliente só encontra as suas faturas
+      Quando consulto a pesquisa de faturas
+      Então só recebo faturas minhas

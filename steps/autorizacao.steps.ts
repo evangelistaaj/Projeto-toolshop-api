@@ -120,7 +120,7 @@ When('descarrego o PDF da fatura do outro cliente', async function (this: MundoT
 
 // ---------- Resultados ----------
 
-Then('a alteração é recusada', async function (this: MundoToolshop) {
+Then(/^a (?:alteração|criação) é recusada$/, async function (this: MundoToolshop) {
   expect(CODIGOS_DE_RECUSA, `código de recusa esperado; veio ${this.resposta!.status()}: ${await corpoSeguro(this.resposta!)}`)
     .toContain(this.resposta!.status());
 });
@@ -244,4 +244,114 @@ Then('a conta do outro cliente continua a existir', async function (this: MundoT
   const { dados } = outroCliente(this);
   const login = await this.api.post('/users/login', { data: { email: dados.email, password: dados.password } });
   expect(login.status(), `o outro cliente devia continuar a conseguir entrar: ${await corpoSeguro(login)}`).toBe(200);
+});
+
+// ---------- Marcas e categorias ----------
+// Como nos produtos: só o administrador cria, altera e apaga. As consultas de
+// verificação levam um parâmetro único, porque a API guarda em cache as respostas
+// de GET (a lista de marcas chegou a mostrar marcas já apagadas).
+
+const ENDERECOS: Record<string, string> = { marca: '/brands', categoria: '/categories' };
+// Consultar uma só: a marca em /brands/{id}; a categoria só em /categories/tree/{id}
+// (o Swagger não documenta GET /categories/{id}, que responde 405).
+const LEITURA: Record<string, string> = { '/brands': '/brands', '/categories': '/categories/tree' };
+const semCache = () => ({ semcache: Date.now().toString() });
+
+function nomeUnico(recurso: string) {
+  const sufixo = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  return { name: `Teste ${recurso} ${sufixo}`, slug: `teste-${recurso}-${sufixo}` };
+}
+
+function marcaOuCategoria(mundo: MundoToolshop) {
+  if (!mundo.marcaOuCategoria) throw new Error('Este passo precisa de uma marca ou categoria antes ("que existe uma marca na loja").');
+  return mundo.marcaOuCategoria;
+}
+
+Given(/^que existe uma (marca|categoria) na loja$/, async function (this: MundoToolshop, recurso: string) {
+  const endereco = ENDERECOS[recurso];
+  const dados = nomeUnico(recurso);
+  const token = await tokenDeAdministrador(this.api);
+  const criacao = await this.api.post(endereco, { data: dados, headers: { Authorization: `Bearer ${token}` } });
+  expect(criacao.status(), await corpoSeguro(criacao)).toBe(201);
+  const id = (await criacao.json()).id;
+  this.registosCriados.push({ endereco, id });
+  this.marcaOuCategoria = { endereco, id, nome: dados.name, slug: dados.slug };
+});
+
+When(/^crio uma (marca|categoria)$/, async function (this: MundoToolshop, recurso: string) {
+  const endereco = ENDERECOS[recurso];
+  const dados = nomeUnico(recurso);
+  this.nomeTentado = dados.name;
+  this.resposta = await this.api.post(endereco, { data: dados, headers: cabecalhosDeAutenticacao(this) });
+  // Se a API aceitar (bug), o registo fica para o hook After apagar.
+  if (this.resposta.status() === 201) this.registosCriados.push({ endereco, id: (await this.resposta.json()).id });
+});
+
+// PUT envia a marca ou categoria completa com o nome novo; PATCH envia só o nome.
+When(/^altero o nome da (?:marca|categoria) com um pedido (PUT|PATCH)$/, async function (this: MundoToolshop, metodo: string) {
+  const { endereco, id, slug } = marcaOuCategoria(this);
+  const corpo = metodo === 'PUT' ? { name: 'Alterado', slug } : { name: 'Alterado' };
+  this.resposta = await this.api.fetch(`${endereco}/${id}`, { method: metodo, data: corpo, headers: cabecalhosDeAutenticacao(this) });
+});
+
+When(/^apago a (?:marca|categoria)$/, async function (this: MundoToolshop) {
+  const { endereco, id } = marcaOuCategoria(this);
+  this.resposta = await this.api.delete(`${endereco}/${id}`, { headers: cabecalhosDeAutenticacao(this) });
+});
+
+Then(/^a (marca|categoria) não fica criada$/, async function (this: MundoToolshop, recurso: string) {
+  const pesquisa = await this.api.get(`${ENDERECOS[recurso]}/search`, { params: { q: this.nomeTentado!, ...semCache() } });
+  expect(pesquisa.status(), await corpoSeguro(pesquisa)).toBe(200);
+  const nomes = (await pesquisa.json()).map((r: { name: string }) => r.name);
+  expect(nomes, `a ${recurso} não devia existir`).not.toContain(this.nomeTentado);
+});
+
+Then(/^a (?:marca|categoria) mantém o nome$/, async function (this: MundoToolshop) {
+  const { endereco, id, nome } = marcaOuCategoria(this);
+  const consulta = await this.api.get(`${LEITURA[endereco]}/${id}`, { params: semCache() });
+  expect(consulta.status(), await corpoSeguro(consulta)).toBe(200);
+  expect((await consulta.json()).name, 'nome').toBe(nome);
+});
+
+Then(/^a (?:marca|categoria) continua a existir$/, async function (this: MundoToolshop) {
+  const { endereco, id } = marcaOuCategoria(this);
+  const consulta = await this.api.get(`${LEITURA[endereco]}/${id}`, { params: semCache() });
+  expect(consulta.status(), 'devia continuar a existir').toBe(200);
+});
+
+// ---------- Relatórios e lista de faturas ----------
+
+When('consulto o relatório {string}', async function (this: MundoToolshop, relatorio: string) {
+  this.resposta = await this.api.get(`/reports/${relatorio}`, { headers: comMeuToken(this) });
+});
+
+Then('o relatório não me é mostrado', async function (this: MundoToolshop) {
+  expect(CODIGOS_DE_RECUSA, `código de recusa esperado; veio ${this.resposta!.status()}: ${await corpoSeguro(this.resposta!)}`)
+    .toContain(this.resposta!.status());
+});
+
+// Todas as páginas da lista (ou da pesquisa) de faturas, com a sessão do cenário.
+When(/^consulto (a lista das minhas faturas|a pesquisa de faturas)$/, async function (this: MundoToolshop, qual: string) {
+  const endereco = qual.includes('pesquisa') ? '/invoices/search' : '/invoices';
+  const params: Record<string, string> = qual.includes('pesquisa') ? { q: 'INV' } : {};
+  this.faturasRecebidas = [];
+  for (let pagina = 1, ultima = 1; pagina <= ultima; pagina++) {
+    const resposta = await this.api.get(endereco, { params: { ...params, page: pagina }, headers: comMeuToken(this) });
+    expect(resposta.status(), await corpoSeguro(resposta)).toBe(200);
+    const corpo = await resposta.json();
+    ultima = corpo.last_page;
+    this.faturasRecebidas.push(...corpo.data.map((f: { invoice_number: string; user_id: string }) => ({ numero: f.invoice_number, dono: f.user_id })));
+  }
+});
+
+// Oráculo: todas as faturas recebidas são minhas, e a do outro cliente não está lá.
+Then('só recebo faturas minhas', async function (this: MundoToolshop) {
+  const eu = await this.api.get('/users/me', { headers: comMeuToken(this) });
+  expect(eu.status(), await corpoSeguro(eu)).toBe(200);
+  const meuId = (await eu.json()).id;
+  const faturas = this.faturasRecebidas;
+  expect(faturas.length, 'devia haver faturas minhas').toBeGreaterThan(0);
+  const deOutros = faturas.filter((f) => f.dono !== meuId).map((f) => f.numero);
+  expect(deOutros, 'faturas de outros clientes na lista').toEqual([]);
+  expect(faturas.map((f) => f.numero), 'a fatura do outro cliente').not.toContain(faturaDoOutroCliente(this).numero);
 });

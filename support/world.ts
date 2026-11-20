@@ -75,6 +75,15 @@ export class MundoToolshop extends World {
   // dele e os dados com que se registou, para confirmar que nada mudou.
   outroCliente?: { id: string; token: string; dados: import('./clientes').DadosCliente };
 
+  // Marcas e categorias: a que existe no cenário (para tentar alterá-la), o nome que se
+  // tentou criar, e tudo o que ficou criado, para o hook After apagar com o administrador.
+  marcaOuCategoria?: { endereco: string; id: string; nome: string; slug: string };
+  nomeTentado?: string;
+  registosCriados: { endereco: string; id: string }[] = [];
+
+  // Faturas recebidas numa lista ou pesquisa (número e dono), de todas as páginas.
+  faturasRecebidas: { numero: string; dono: string }[] = [];
+
   // Preço do produto antes de uma tentativa de alteração, para confirmar que não mudou.
   precoOriginal?: number;
 
