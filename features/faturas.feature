@@ -152,3 +152,13 @@ Funcionalidade: Compra com fatura
       Dado que existe um produto com stock 0
       Quando junto esse produto a um carrinho novo
       Então o produto não é aceite no carrinho
+
+  Regra: Também se pode comprar sem conta, como convidado
+
+    Cenário: Uma compra sem conta é aceite, com uma fatura da loja
+      Quando compro sem conta, como convidado
+      Então a compra como convidado é aceite, com uma fatura da loja
+
+    Cenário: Uma compra sem conta com um email que não é um email é recusada
+      Quando compro sem conta com o email "nao-e-um-email"
+      Então recebo uma resposta com o código 422

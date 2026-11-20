@@ -11,7 +11,9 @@ export type FaturaCriada = { id: string; numero: string };
 // na sessão do cenário: produto novo (criado pelo administrador), carrinho com 1
 // unidade, morada sugerida para 1000-001 (Portugal) e pagamento na entrega.
 // Os produtos e carrinhos ficam registados para a limpeza no After.
-export async function compraFeitaCom(mundo: MundoToolshop, token: string): Promise<FaturaCriada> {
+// Um carrinho com um produto novo (criado pelo administrador, apagado no fim) e os dados
+// de faturação de uma morada válida: o corpo de uma compra, com ou sem conta.
+export async function dadosDeCompra(mundo: MundoToolshop) {
   const tokenAdmin = await tokenDeAdministrador(mundo.api);
   const criacao = await mundo.api.post('/products', {
     data: await dadosDeProdutoValidos(mundo.api, { stock: 5 }),
@@ -34,19 +36,23 @@ export async function compraFeitaCom(mundo: MundoToolshop, token: string): Promi
   expect(pesquisa.status(), await corpoSeguro(pesquisa)).toBe(200);
   const morada = await pesquisa.json();
 
+  return {
+    billing_street: `${morada.street} ${morada.house_number}`,
+    billing_city: morada.city,
+    // A pesquisa devolve o distrito vazio em Portugal (issue #2): indicamo-lo nós.
+    billing_state: 'Lisboa',
+    billing_country: 'PT',
+    billing_postal_code: '1000-001',
+    payment_method: 'cash-on-delivery',
+    payment_details: {},
+    cart_id: carrinhoId,
+  };
+}
+
+export async function compraFeitaCom(mundo: MundoToolshop, token: string): Promise<FaturaCriada> {
   const compra = await mundo.api.post('/invoices', {
     headers: { Authorization: `Bearer ${token}` },
-    data: {
-      billing_street: `${morada.street} ${morada.house_number}`,
-      billing_city: morada.city,
-      // A pesquisa devolve o distrito vazio em Portugal (issue #2): indicamo-lo nós.
-      billing_state: 'Lisboa',
-      billing_country: 'PT',
-      billing_postal_code: '1000-001',
-      payment_method: 'cash-on-delivery',
-      payment_details: {},
-      cart_id: carrinhoId,
-    },
+    data: await dadosDeCompra(mundo),
   });
   expect(compra.status(), await corpoSeguro(compra)).toBe(201);
   const fatura = await compra.json();

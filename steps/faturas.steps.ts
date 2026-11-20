@@ -6,6 +6,7 @@ import { dadosDeProdutoValidos, type DadosProduto } from '../support/produtos';
 import { codigoDoPais } from '../support/referencia';
 import { corpoSeguro } from '../support/seguranca';
 import { comprarCarrinho, moradaIndicada } from '../support/faturas';
+import { dadosDeCompra } from '../support/compras';
 
 // ---------- Preparação: produto, carrinho e morada ----------
 
@@ -310,4 +311,28 @@ Then('o produto não é aceite no carrinho', async function (this: MundoToolshop
 
     const consulta = await this.api.get(`/carts/${this.carrinhoId}`);
     expect((await consulta.json()).cart_items, 'o carrinho devia continuar vazio').toEqual([]);
+});
+
+// ---------- Compra sem conta (convidado) ----------
+// O mesmo carrinho e morada de uma compra com conta, sem login, com os dados do convidado.
+
+async function compraComoConvidado(mundo: MundoToolshop, email: string) {
+  const dados = await dadosDeCompra(mundo);
+  mundo.resposta = await mundo.api.post('/invoices/guest', {
+    data: { ...dados, guest_email: email, guest_first_name: 'Ana', guest_last_name: 'Silva' },
+  });
+}
+
+When('compro sem conta, como convidado', async function (this: MundoToolshop) {
+  await compraComoConvidado(this, `convidado.${Date.now().toString(36)}@example.com`);
+});
+
+When('compro sem conta com o email {string}', async function (this: MundoToolshop, email: string) {
+  await compraComoConvidado(this, email);
+});
+
+Then('a compra como convidado é aceite, com uma fatura da loja', async function (this: MundoToolshop) {
+  expect([200, 201], `compra aceite esperada; veio ${this.resposta!.status()}: ${await corpoSeguro(this.resposta!)}`)
+    .toContain(this.resposta!.status());
+  expect((await this.resposta!.json()).invoice_number, 'número da fatura').toMatch(/^INV-/);
 });

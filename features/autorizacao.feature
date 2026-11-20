@@ -275,3 +275,39 @@ Funcionalidade: Autorização
       Quando apago o favorito do outro cliente
       Então a alteração é recusada
       E o favorito do outro cliente continua a existir
+
+  Regra: Só o administrador gere as especificações dos produtos
+
+    Contexto:
+      Dado que existe um produto na loja
+
+    Cenário: Acrescentar uma especificação sem login é recusado
+      Quando acrescento uma especificação ao produto
+      Então a criação é recusada
+      E o produto não fica com a especificação nova
+
+    @bug-conhecido @issue-37
+    Cenário: Um cliente não consegue acrescentar uma especificação a um produto
+      Bug: a gestão de especificações exige login, mas não o perfil de administrador.
+      https://github.com/evangelistaaj/Projeto-toolshop-api/issues/37
+
+      Dado que fiz login como cliente
+      Quando acrescento uma especificação ao produto
+      Então a criação é recusada
+      E o produto não fica com a especificação nova
+
+    @bug-conhecido @issue-37
+    Esquema do Cenário: Um cliente não consegue <acao> a especificação de um produto
+      Bug: a gestão de especificações exige login, mas não o perfil de administrador.
+      https://github.com/evangelistaaj/Projeto-toolshop-api/issues/37
+
+      Dado que o produto tem uma especificação
+      E que fiz login como cliente
+      Quando <acao_passo> a especificação do produto
+      Então a alteração é recusada
+      E a especificação do produto fica como estava
+
+      Exemplos:
+        | acao    | acao_passo |
+        | alterar | altero     |
+        | apagar  | apago      |

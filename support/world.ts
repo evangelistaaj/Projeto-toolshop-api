@@ -87,6 +87,13 @@ export class MundoToolshop extends World {
   tokenAntigo?: string;
   respostasDaRecuperacao?: { comConta: { codigo: number; corpo: string }; semConta: { codigo: number; corpo: string } };
 
+  // Verificação em dois passos (TOTP): o segredo da conta, para calcular os códigos.
+  segredoTotp?: string;
+
+  // Especificação de um produto, criada pelo administrador no cenário.
+  especificacao?: { id: string; valor: string };
+  nomeDaEspecificacaoTentada?: string;
+
   // Favoritos: o favorito do outro cliente.
   favoritoDoOutroCliente?: string;
 

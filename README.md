@@ -9,9 +9,9 @@ Testes automatizados da API da **Toolshop** ([Practice Software Testing](https:/
 ![Cucumber](https://img.shields.io/badge/cucumber-13-23D96C?logo=cucumber&logoColor=white)
 ![Playwright](https://img.shields.io/badge/playwright-1.65-2EAD33?logo=playwright&logoColor=white)
 
-> **Em resumo:** testes de API REST de uma loja online, escritos em **Gherkin (português)** e automatizados com **Cucumber + Playwright + TypeScript**. Destaques: World e hooks, dados próprios em cada cenário (criados e apagados pela API), testes de segurança (autorização, tokens e dados de cartão), contratos das respostas com **JSON Schema**, a loja a correr em **Docker** na CI, e **34 issues** reportados (31 bugs e 3 desvios da documentação), cada um com um cenário que o reproduz.
+> **Em resumo:** testes de API REST de uma loja online, escritos em **Gherkin (português)** e automatizados com **Cucumber + Playwright + TypeScript**. Destaques: World e hooks, dados próprios em cada cenário (criados e apagados pela API), testes de segurança (autorização, tokens e dados de cartão), contratos das respostas com **JSON Schema**, a loja a correr em **Docker** na CI, e **37 issues** reportados (34 bugs e 3 desvios da documentação), cada um com um cenário que o reproduz.
 >
-> 🇬🇧 **In short:** REST API test suite for an e-commerce demo app, written in Gherkin (Portuguese) and automated with Cucumber + Playwright + TypeScript. Highlights: World and hooks, self-contained test data, security tests (authorization, tokens, card data), JSON Schema response contracts, the app running in Docker in CI, and 34 reported issues (31 bugs and 3 documentation mismatches), each with a scenario that reproduces it.
+> 🇬🇧 **In short:** REST API test suite for an e-commerce demo app, written in Gherkin (Portuguese) and automated with Cucumber + Playwright + TypeScript. Highlights: World and hooks, self-contained test data, security tests (authorization, tokens, card data), JSON Schema response contracts, the app running in Docker in CI, and 37 reported issues (34 bugs and 3 documentation mismatches), each with a scenario that reproduces it.
 
 > 🚧 **Projeto em construção.** Este README acompanha o estado real do repositório: só descreve o que já está feito.
 
@@ -170,9 +170,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 184 | 117 | 67 | 0 | 34 |
+| 197 | 124 | 73 | 0 | 37 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 67 execuções a vermelho correspondem a **34 issues** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (4: alterar o preço sem login e como cliente, com `PUT` e com `PATCH`), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1), #23 (1), #24 (2: lista de produtos e detalhe de um produto), #25 (1), #26 (1), #27 (1), #28 (3: pesquisa sem termo, sentido de ordenação e preço que não é um número), #29 (1), #30 (12: criar e alterar marcas e categorias, sem login e como cliente, com `PUT` e `PATCH`), #31 (1), #32 (1), #33 (1) e #34 (2: ver e apagar o favorito de outro cliente).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 73 execuções a vermelho correspondem a **37 issues** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (4: alterar o preço sem login e como cliente, com `PUT` e com `PATCH`), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1), #23 (1), #24 (2: lista de produtos e detalhe de um produto), #25 (1), #26 (1), #27 (1), #28 (3: pesquisa sem termo, sentido de ordenação e preço que não é um número), #29 (1), #30 (12: criar e alterar marcas e categorias, sem login e como cliente, com `PUT` e `PATCH`), #31 (1), #32 (1), #33 (2: o token antigo continua válido e pode ser renovado), #34 (2: ver e apagar o favorito de outro cliente), #35 (1), #36 (1) e #37 (3: acrescentar, alterar e apagar especificações).
 
 **O que já é verificado**
 
@@ -225,6 +225,8 @@ Funcionalidade: Catálogo de produtos
 | Faturas | O número da fatura começa pelo ano atual | `INV-` + ano atual |
 | Faturas | Duas compras seguidas têm números consecutivos | A sequência da segunda fatura = a da primeira + 1 |
 | Faturas 🐞 | O número da fatura tem o formato das faturas da loja | `INV-` + ano + 7 algarismos de sequência, como os dados iniciais — **falha: tem 6** (bug [#8](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/8)) |
+| Faturas | Comprar sem conta, como convidado | Aceite, com uma fatura `INV-…` |
+| Faturas | Comprar sem conta com um email que não é um email | 422 |
 | Stock ⏳ | Comprar todo o stock esgota o produto | Código 201; o produto fica esgotado, lido sem cache no carrinho da compra, até 90 s depois |
 | Stock ⏳🐞 | O catálogo mostra o produto esgotado quando o stock acaba | Depois de o stock real acabar, o `GET /products/{id}` concorda — **falha: mostra "disponível" até 5 min** (bug [#10](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/10)) |
 | Stock 🐞 | Comprar mais unidades do que o stock disponível é recusado | Código 422; nenhuma fatura — **falha: a compra é aceite** (bug [#9](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/9)) |
@@ -268,11 +270,20 @@ Funcionalidade: Catálogo de produtos
 | Autorização | A lista e a pesquisa de faturas de um cliente, todas as páginas | Só faturas do próprio; a fatura de outro cliente, criada no cenário, não aparece |
 | Autorização | A lista de favoritos de um cliente | Não tem os favoritos de outro cliente |
 | Autorização 🐞 | Ver e apagar o favorito de outro cliente | Recusado — **falha: ver dá 200; apagar dá 204 sem apagar** (bug [#34](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/34)) |
+| Autorização | Acrescentar uma especificação a um produto sem login | 401, e nada fica criado |
+| Autorização 🐞 | Um cliente acrescenta, altera e apaga especificações de um produto | Recusado — **falha: tudo aceite** (bug [#37](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/37)) |
 | Password | Mudar a password com dados válidos | Entra com a nova e não com a antiga (conta criada no cenário) |
 | Password | Mudar a password com a atual errada, com a confirmação diferente ou com uma password fraca | 400/422, e a password não muda |
 | Password 🐞 | A sessão de antes de mudar a password | 401 — **falha: o token antigo continua válido** (bug [#33](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/33)) |
 | Password 🐞 | Pedir uma nova password (`forgot-password`), sem login | A password não muda — **falha: passa a ser `welcome02`; qualquer pessoa toma qualquer conta só com o email** (bug [#31](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/31)) |
 | Password 🐞 | Pedir uma nova password para um email com conta e para um sem conta | Respostas iguais — **falha: 200 vs 422, revela quem tem conta** (bug [#32](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/32)) |
+| Sessão | Renovar o token (`/users/refresh`) | Token novo; o antigo deixa de ser aceite |
+| Sessão | Renovar depois de terminar a sessão | 401 |
+| Sessão 🐞 | Renovar sem token | 401 — **falha: 500, com detalhes internos do servidor** (bug [#35](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/35)) |
+| Sessão 🐞 | Renovar a sessão de antes de mudar a password | 401 — **falha: renova** (bug [#33](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/33)) |
+| Dois passos (TOTP) | Ativar com um código errado | 400 |
+| Dois passos (TOTP) | Com a verificação ativa, só a password | O login pede o código, e o token que dá ainda não abre a conta |
+| Dois passos (TOTP) 🐞 | Password e código certo | Entra na conta — **falha: o token restrito é recusado no próprio passo do código** (bug [#36](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/36)). O código é calculado pelo teste (RFC 6238, com testes unitários sobre os vetores oficiais) |
 | Registo | Registo com dados válidos | Código 201; o login com a conta nova funciona; os dados da conta (`/users/me`) são os enviados |
 | Registo | Idade: fez 18 anos ontem, faz 75 anos amanhã (ainda 74) | Aceite |
 | Registo 🐞 | Idade: faz 18 anos hoje | Aceite — **falha: recusado** (bug [#20](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/20)) |
@@ -370,6 +381,9 @@ Funcionalidade: Catálogo de produtos
 | [#32](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/32) | `POST /users/forgot-password` **revela quais emails têm conta** (200 vs 422) | 🟠 Média (segurança: enumeração de contas) | Aberto |
 | [#33](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/33) | `POST /users/change-password`: **o token de antes da alteração continua válido** | 🟠 Média (segurança) | Aberto |
 | [#34](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/34) | Favoritos: um cliente **vê o favorito de outro** pelo id, e o `DELETE` responde 204 sem apagar | 🟡 Baixa (segurança: OWASP API1) | Aberto |
+| [#35](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/35) | `GET /users/refresh` **sem token dá erro 500** e mostra detalhes internos do servidor (classe da exceção, caminhos, pilha) | 🟠 Média (segurança: OWASP API8) | Aberto |
+| [#36](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/36) | Verificação em dois passos: **depois de ativada, não há forma de completar o login** (o passo do código recusa o próprio token restrito) | 🔴 Alta (o cliente fica sem acesso à conta) | Aberto |
+| [#37](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/37) | Especificações de produto: **um cliente cria, altera e apaga** especificações (só o login é exigido) | 🔴 Alta (segurança: OWASP API5) | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`. Quando só alguns exemplos de um esquema reproduzem um bug, ficam num bloco `Exemplos` à parte, com as tags e a descrição do bug, e os restantes continuam a correr normalmente.
 
@@ -396,6 +410,7 @@ Diferenças entre a documentação (Swagger) e o comportamento real da API, e ou
 | `GET /products/search` | `q`: "A query phrase" | Procura só no **nome**, sem distinguir maiúsculas, e aceita parte de uma palavra (não procura na descrição nem na categoria) | ℹ️ O alcance da pesquisa não está documentado |
 | `GET /brands` (e outras listas) | Não documentado | As respostas de `GET` vêm de **cache**: a lista de marcas mostrou marcas já apagadas (o mesmo mecanismo do #10). Um parâmetro a mais no endereço devolve o estado real | ℹ️ Os testes que confirmam "nada mudou" usam sempre um endereço único |
 | `GET /categories/{id}` | Não documentado (só `GET /categories/tree/{id}`) | Responde **405**; uma categoria consulta-se em `/categories/tree/{id}` | ℹ️ Coerente com o Swagger, mas pouco intuitivo |
+| `POST /totp/login/totp` | Não documentado | É o passo que troca o token restrito (depois da password) pelo token de acesso, quando a verificação em dois passos está ativa. Encontrado no código da Toolshop | ⚠️ Sem ele, quem integra não sabe completar o login (e hoje não funciona: #36) |
 
 > 🔎 **Da investigação (não coberto por testes):** para o administrador, o `in_stock` devolve o **número** de unidades em stock, e não verdadeiro ou falso como documenta o Swagger. Confirmado no código-fonte da Toolshop (`Product::getInStockAttribute`) e observado uma vez; não foi possível reproduzir de forma consistente (provavelmente por causa da cache do #10).
 
@@ -415,6 +430,7 @@ support/     world.ts e hooks.ts      estado de cada cenário, preparação e li
              carrinho.ts, compras.ts, faturas.ts
                                       carrinho, compras e consulta das faturas
              oraculos.ts, datas.ts    verificações e datas relativas (testadas à parte)
+             totp.ts                  códigos de verificação em dois passos (RFC 6238)
              seguranca.ts             tokens e passwords escondidos nas mensagens
              contratos.ts             validação das respostas contra os contratos
              toolshop-local.ts        comandos na Toolshop local (docker exec)
@@ -457,6 +473,7 @@ Os dados que são o **tema** de um cenário (por exemplo, o código postal pesqu
 - [x] Massa de teste em ficheiros JSON (produtos com nomes de negócio, países, províncias e pagamentos)
 - [x] Autorização: dados de outros clientes e funções reservadas ao administrador (OWASP API1 e API5)
 - [x] Password: alteração e recuperação; favoritos, marcas, categorias, relatórios e lista de faturas (autorização)
+- [x] Sessão (renovação do token e verificação em dois passos), especificações de produto e compra sem conta: todos os endpoints do Swagger com testes
 - [x] Registo de cliente e bloqueio de conta
 - [x] Tokens inválidos: alterado, sem assinatura, expirado e depois do logout
 - [x] Catálogo: paginação, pesquisa, filtros e ordenação
@@ -468,7 +485,6 @@ Os dados que são o **tema** de um cenário (por exemplo, o código postal pesqu
 
 ### 💡 Próximos passos
 
-- Endpoints do Swagger ainda sem testes: renovação do token (`/users/refresh`, incluindo depois de mudar a password), autenticação de dois fatores (TOTP), compra sem conta (`/invoices/guest`) e especificações de produto
 - Reescrever este projeto em **Java + REST Assured + Cucumber-JVM**, como segunda stack do portfolio
 
 ---

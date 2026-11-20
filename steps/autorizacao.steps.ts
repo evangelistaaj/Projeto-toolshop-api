@@ -412,3 +412,66 @@ Then('o favorito do outro cliente continua a existir', async function (this: Mun
   expect(consulta.status(), await corpoSeguro(consulta)).toBe(200);
   expect((await consulta.json()).map((f: { id: string }) => f.id), 'favoritos do outro cliente').toContain(favoritoDoOutro(this));
 });
+
+// ---------- Especificações dos produtos ----------
+// Como os produtos (#17), as marcas e as categorias (#30): só o administrador as gere.
+// As consultas levam um endereço único, por causa da cache das respostas de GET.
+
+function produtoDoCenario(mundo: MundoToolshop) {
+  if (!mundo.produtoId) throw new Error('Este passo precisa de um produto antes ("que existe um produto na loja").');
+  return mundo.produtoId;
+}
+
+async function especificacoesDoProduto(mundo: MundoToolshop) {
+  const consulta = await mundo.api.get(`/products/${produtoDoCenario(mundo)}/specs`, { params: semCache() });
+  expect(consulta.status(), await corpoSeguro(consulta)).toBe(200);
+  return (await consulta.json()) as { id: string; spec_name: string; spec_value: string }[];
+}
+
+// Apaga, com o administrador, o que um bug deixar criar, antes de o produto ser apagado.
+function limparEspecificacoes(mundo: MundoToolshop) {
+  mundo.limpezas.push(async () => {
+    const token = await tokenDeAdministrador(mundo.api);
+    for (const spec of await especificacoesDoProduto(mundo)) {
+      await mundo.api.delete(`/products/${produtoDoCenario(mundo)}/specs/${spec.id}`, { headers: { Authorization: `Bearer ${token}` } });
+    }
+  });
+}
+
+Given('que o produto tem uma especificação', async function (this: MundoToolshop) {
+  const token = await tokenDeAdministrador(this.api);
+  const criacao = await this.api.post(`/products/${produtoDoCenario(this)}/specs`, {
+    data: { spec_name: 'Weight', spec_value: '1.5', spec_unit: 'kg' },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  expect(criacao.status(), await corpoSeguro(criacao)).toBe(201);
+  this.especificacao = { id: (await criacao.json()).id, valor: '1.5' };
+  limparEspecificacoes(this);
+});
+
+When('acrescento uma especificação ao produto', async function (this: MundoToolshop) {
+  this.nomeDaEspecificacaoTentada = `Teste ${Date.now().toString(36)}`;
+  this.resposta = await this.api.post(`/products/${produtoDoCenario(this)}/specs`, {
+    data: { spec_name: this.nomeDaEspecificacaoTentada, spec_value: '1', spec_unit: 'kg' },
+    headers: cabecalhosDeAutenticacao(this),
+  });
+  limparEspecificacoes(this);
+});
+
+When(/^(altero|apago) a especificação do produto$/, async function (this: MundoToolshop, acao: string) {
+  const id = this.especificacao!.id;
+  const endereco = `/products/${produtoDoCenario(this)}/specs/${id}`;
+  this.resposta = acao === 'altero'
+    ? await this.api.put(endereco, { data: { spec_name: 'Weight', spec_value: '99', spec_unit: 'kg' }, headers: cabecalhosDeAutenticacao(this) })
+    : await this.api.delete(endereco, { headers: cabecalhosDeAutenticacao(this) });
+});
+
+Then('o produto não fica com a especificação nova', async function (this: MundoToolshop) {
+  const nomes = (await especificacoesDoProduto(this)).map((s) => s.spec_name);
+  expect(nomes, 'especificações do produto').not.toContain(this.nomeDaEspecificacaoTentada);
+});
+
+Then('a especificação do produto fica como estava', async function (this: MundoToolshop) {
+  const spec = (await especificacoesDoProduto(this)).find((s) => s.id === this.especificacao!.id);
+  expect(spec?.spec_value, 'valor da especificação').toBe(this.especificacao!.valor);
+});
