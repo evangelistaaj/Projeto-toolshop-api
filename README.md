@@ -9,6 +9,10 @@ Testes automatizados da API da **Toolshop** ([Practice Software Testing](https:/
 ![Cucumber](https://img.shields.io/badge/cucumber-13-23D96C?logo=cucumber&logoColor=white)
 ![Playwright](https://img.shields.io/badge/playwright-1.65-2EAD33?logo=playwright&logoColor=white)
 
+> **Em resumo:** testes de API REST de uma loja online, escritos em **Gherkin (português)** e automatizados com **Cucumber + Playwright + TypeScript**. Destaques: World e hooks, dados próprios em cada cenário (criados e apagados pela API), testes de segurança (autorização, tokens e dados de cartão), a loja a correr em **Docker** na CI, e **23 bugs** reportados, cada um com um cenário que o reproduz.
+>
+> 🇬🇧 **In short:** REST API test suite for an e-commerce demo app, written in Gherkin (Portuguese) and automated with Cucumber + Playwright + TypeScript. Highlights: World and hooks, self-contained test data, security tests (authorization, tokens, card data), the app running in Docker in CI, and 23 reported bugs, each with a scenario that reproduces it.
+
 > 🚧 **Projeto em construção.** Este README acompanha o estado real do repositório: só descreve o que já está feito.
 
 ---
@@ -71,9 +75,10 @@ A versão do Node.js está em `.nvmrc` e no campo `engines` do `package.json`.
 |---|---|
 | `npm test` | Todos os cenários, exceto os que reproduzem bugs conhecidos e os lentos (alguns segundos) |
 | `npm run test:lento` | Só os cenários lentos (`@lento`), que esperam por processos em segundo plano (até 90 s cada). Arranca antes um processador da fila da Toolshop só para o teste |
-| `npm run test:bugs` | Só os cenários que reproduzem bugs conhecidos (`@bug-conhecido`), com o resumo das falhas em `resultados/bugs.txt` |
+| `npm run test:bugs` | Só os cenários que reproduzem bugs conhecidos (`@bug-conhecido`), com o resumo das falhas em `resultados/bugs.txt`. Arranca antes um processador da fila, como o `test:lento` |
 | `npm run test:limpo` | Repõe os dados da Toolshop local e corre `npm test` |
 | `npm run typecheck` | Verifica os tipos do TypeScript em todo o projeto, sem correr os testes |
+| `npm run test:unit` | Testes unitários das verificações e das funções de apoio (menos de 1 s, sem Toolshop) |
 | `npx cucumber-js -p bugs --tags @issue-5` | Só os cenários de um bug (cada um tem a tag do seu issue). O `-p bugs` é preciso: as tags da linha de comandos juntam-se às do perfil, e o perfil normal exclui os bugs conhecidos |
 
 ### 🤖 Integração contínua
@@ -81,13 +86,13 @@ A versão do Node.js está em `.nvmrc` e no campo `engines` do `package.json`.
 A cada `push` para o `main` (e em cada pull request), o GitHub Actions (`.github/workflows/testes-api.yml`):
 
 1. arranca a Toolshop em Docker, com o mesmo `docker-compose.prod.yml` do ambiente local, e o servidor de email de testes;
-2. instala as dependências e verifica os tipos do TypeScript;
+2. instala as dependências, verifica os tipos do TypeScript e corre os testes unitários;
 3. repõe os dados da Toolshop;
 4. corre os cenários normais e os lentos (se algum falhar, a execução fica a vermelho);
 5. corre os bugs conhecidos, só para o relatório (falham de propósito e não põem a execução a vermelho);
 6. publica os relatórios HTML como artefacto (`relatorios`), na página de cada execução, no separador **Actions**.
 
-Também pode ser corrida à mão, no separador **Actions** → *Testes da API* → *Run workflow*. Uma execução completa demora cerca de 2 minutos.
+Também pode ser corrida à mão, no separador **Actions** → *Testes da API* → *Run workflow*. Uma execução completa demora 2 a 3 minutos.
 
 > 🧬 As imagens do servidor web e do agendador da Toolshop estão publicadas só para ARM (`linux/arm64`), e as máquinas do GitHub são x86 (`amd64`). Sem mais nada, esses contentores não correm e a API não responde. A pipeline ativa a emulação ARM (QEMU, com `docker/setup-qemu-action`) antes de arrancar a Toolshop; a API e a base de dados correm de forma nativa.
 
@@ -128,7 +133,9 @@ Cada teste cria e apaga os seus próprios dados, por isso os testes passam com o
 
 ### 🔑 Contas de teste
 
-Os testes usam contas criadas pelos dados iniciais da Toolshop: um cliente (`customer2@practicesoftwaretesting.com`), um segundo cliente para os cenários de autorização (`customer3@practicesoftwaretesting.com`, que tem uma password diferente das outras) e o administrador. São credenciais públicas de uma aplicação de treino, definidas em `support/contas.ts`, e podem ser trocadas sem mexer no código: Os cenários de registo e de bloqueio de conta usam sempre **contas acabadas de registar** (nomes de `dados/clientes.json`, emails únicos em `@example.com`), que são apagadas no fim de cada cenário.
+Os testes usam contas criadas pelos dados iniciais da Toolshop: um cliente (`customer2@practicesoftwaretesting.com`), um segundo cliente para os cenários de autorização (`customer3@practicesoftwaretesting.com`, que tem uma password diferente das outras) e o administrador. São credenciais públicas de uma aplicação de treino, definidas em `support/contas.ts`, e podem ser trocadas sem mexer no código, com as variáveis abaixo.
+
+Os cenários de registo e de bloqueio de conta usam sempre **contas acabadas de registar** (nomes de `dados/clientes.json`, emails únicos em `@example.com`), que são apagadas no fim de cada cenário.
 
 | Variável | Para que serve |
 |---|---|
@@ -138,35 +145,6 @@ Os testes usam contas criadas pelos dados iniciais da Toolshop: um cliente (`cus
 | `TOOLSHOP_CONTENTOR` | Contentor Docker da API local (por omissão `pst-laravel-api-1`), usado para gerar o PDF de uma fatura na preparação de um cenário |
 
 > 🔒 Tokens e passwords nunca aparecem nas mensagens de falha: são substituídos por `***` antes de serem mostrados (`support/seguranca.ts`).
-
----
-
-## 📂 Estrutura
-
-```
-features/    Cenários em Gherkin (português)
-steps/       Definições dos passos, um ficheiro por funcionalidade
-support/     World (estado de cada cenário), hooks (preparação e limpeza),
-             contas de teste e proteção de dados sensíveis
-             (incluindo o carrinho com vários produtos e a consulta da fatura)
-dados/       Massa de teste em JSON: produtos, países, províncias e pagamentos
-cucumber.js  Configuração do Cucumber
-.vscode/     Configuração da extensão Cucumber do VS Code (navegação e autocompletar dos passos)
-.github/     Integração contínua (GitHub Actions)
-```
-
-### 🧪 Massa de teste
-
-Os dados de fundo dos cenários vivem em ficheiros JSON, na pasta `dados/`, separados do código:
-
-| Ficheiro | Conteúdo |
-|---|---|
-| `produtos.json` | Produtos do catálogo com nomes e descrições de negócio, em inglês como o resto da Toolshop. Cada produto criado por um cenário recebe uma referência única no nome (ex.: `Claw Hammer with Fiberglass Handle - ref. MHO7X2K9A3F`) |
-| `paises.json` | Os países dos cenários ("Portugal") e o código ISO que a API espera (`PT`) |
-| `provincias-argentina.json` | As 24 províncias argentinas, para verificar a pesquisa de morada |
-| `pagamentos.json` | Dados válidos de cada método de pagamento, com os nomes dos campos em português, iguais aos do Gherkin |
-
-Os dados que são o **tema** de um cenário (por exemplo, o código postal pesquisado ou um cartão inválido) ficam no próprio `.feature`, à vista de quem o lê. Para os ficheiros JSON vão só os dados de fundo. Um nome que não esteja na massa de teste (um país, um campo de pagamento) faz o teste falhar com uma mensagem clara, em vez de enviar à API um valor inventado.
 
 ---
 
@@ -190,7 +168,7 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 118 | 79 | 39 | 0 | 23 |
+| 119 | 80 | 39 | 0 | 23 |
 
 > Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 39 execuções a vermelho correspondem a **23 bugs** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (2: alterar o preço sem login e como cliente), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1) e #23 (1).
 
@@ -261,6 +239,8 @@ Funcionalidade: Catálogo de produtos
 | Pagamentos | Verificação de um cartão-oferta: 16 caracteres e código de 4 (válido); número com 15 e com 17; código com 3 | 200; 422 só no campo alterado |
 | Pagamentos 🐞 | Comprar com um cartão inválido (número com letras, expirado, CVV com 2 algarismos) ou uma conta com letras | `POST /invoices`: código 422 e nenhuma fatura, como na verificação — **falha: a compra é aceite e cria a fatura** (bug [#16](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/16)) |
 | Pagamentos | Comprar com um cartão-oferta de 15 caracteres (controlo) | Código 422 e nenhuma fatura: a compra valida o cartão-oferta, o que prova que o teste distingue os dois comportamentos |
+| Pagamentos 🐞 | A fatura não mostra o código de segurança do cartão (CVV de 3 e de 4 algarismos) | Compra com cartão de crédito; a fatura tem o pagamento com cartão; nenhum campo com nome de código de segurança (`cvv`, `cvc`, `security_code`), a qualquer profundidade, tem valor — **falha: devolve `payment.payment_details.cvv`** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
+| Pagamentos 🐞 | A fatura não mostra o número completo do cartão (dois números) | O número não aparece em lado nenhum da resposta, nem com hífenes nem só com algarismos (o número mascarado é aceite) — **falha: vem completo** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
 | Autorização | Um cliente não consegue ver a fatura de outro cliente | Código 401, 403 ou 404, e a resposta não contém o número da fatura |
 | Autorização 🐞 | Um cliente não consegue mudar o estado da fatura de outro cliente | Recusa e, confirmado pelo dono, a fatura não fica concluída — **falha: 200, aceite** (bug [#18](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/18)) |
 | Autorização 🐞 | Um cliente não consegue descarregar o PDF da fatura de outro cliente | Depois de confirmar que o dono descarrega o PDF: recusa, e a resposta não é um PDF — **falha: entrega o PDF** (bug [#19](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/19)) |
@@ -281,8 +261,10 @@ Funcionalidade: Catálogo de produtos
 | Bloqueio de conta | Três tentativas falhadas | A 4.ª tentativa, com a password certa, dá 423 ("Account locked") |
 | Bloqueio de conta | Duas falhas e um login certo | O contador reinicia: mais duas falhas não bloqueiam |
 | Bloqueio de conta | Password errada | A resposta é igual à de um email que não existe (não revela que a conta existe) |
-| Pagamentos 🐞 | A fatura não mostra o código de segurança do cartão (CVV de 3 e de 4 algarismos) | Compra com cartão de crédito; a fatura tem o pagamento com cartão; nenhum campo com nome de código de segurança (`cvv`, `cvc`, `security_code`), a qualquer profundidade, tem valor — **falha: devolve `payment.payment_details.cvv`** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
-| Pagamentos 🐞 | A fatura não mostra o número completo do cartão (dois números) | O número não aparece em lado nenhum da resposta, nem com hífenes nem só com algarismos (o número mascarado é aceite) — **falha: vem completo** (bug [#14](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/14)) |
+
+---
+
+## 🧱 Boas práticas e decisões
 
 > ⏳ O stock é descontado em segundo plano, por um agendador que corre uma vez por minuto. Os cenários lentos **repetem a verificação** de 5 em 5 segundos até o resultado aparecer (no máximo 90 s), sem esperas fixas. Antes de cada compra, confirma-se que o produto começa disponível: sem isso, "fica esgotado" passaria sem provar nada.
 
@@ -290,7 +272,11 @@ Funcionalidade: Catálogo de produtos
 >
 > A prova foi feita em dois sentidos. Logo a seguir ao reset, sem processador próprio, os cenários lentos **falharam**. Com a fila já vazia, os mesmos cenários **passaram** em 38 s, e os trabalhos da compra saíram da fila em menos de um minuto. Como a pipeline faz sempre `db:reset` antes dos testes, apanharia sempre a fila cheia.
 >
-> Por isso, o `npm run test:lento` arranca primeiro **o seu próprio processador da fila**, em segundo plano (`docker exec -d ... php artisan queue:work --max-time=300`), que se desliga sozinho ao fim de 5 minutos. O código que desconta o stock e envia o email continua a ser o da Toolshop; os cenários deixam só de depender do horário do agendador. O limite de 90 s mantém-se.
+> Por isso, o `npm run test:lento` e o `npm run test:bugs` arrancam primeiro **o seu próprio processador da fila**, em segundo plano (`docker exec -d ... php artisan queue:work --max-time=300`), que se desliga sozinho ao fim de 5 minutos. O código que desconta o stock e envia o email continua a ser o da Toolshop; os cenários deixam só de depender do horário do agendador. O limite de 90 s mantém-se.
+>
+> O `test:bugs` precisa dele pela mesma razão, e com uma consequência pior: os cenários dos bugs do email (#11 e #12) chegaram a falhar por o email **não chegar a tempo**, em vez de falharem na verificação do bug. Um cenário de bug que falha pela razão errada esconde se o bug ainda existe: se o bug fosse corrigido, o cenário continuava vermelho, e ninguém dava por isso.
+
+> 🧪 **Testar os testes.** As verificações mais delicadas (dados de cartão expostos, produtos repetidos entre páginas), os tokens alterados e as datas relativas vivem em funções próprias (`support/oraculos.ts`, `support/jwt.ts`, `support/datas.ts`) e têm testes unitários com dados inventados (`npm run test:unit`): cada verificação é posta à prova com um caso que tem de apanhar e um controlo que tem de deixar passar. Para confirmar que estes testes têm valor, o código foi sabotado de propósito (por exemplo, `repetidos` a nunca encontrar nada); uma das sabotagens não foi apanhada à primeira, e isso levou a um teste novo. As datas usam um relógio simulado: incluem a passagem de ano, o 29 de fevereiro e o fuso horário.
 
 > 🧭 **A fonte de verdade é a versão que corre.** O código-fonte da Toolshop no GitHub serve para encontrar suspeitas, mas a imagem publicada no Docker Hub pode ser mais antiga (foi assim com o código postal no registo, #23). Por isso, cada suspeita só vira issue depois de um teste a confirmar contra a aplicação real.
 
@@ -309,28 +295,6 @@ Funcionalidade: Catálogo de produtos
 > 🎯 Os oráculos da numeração dependem só das faturas que o próprio cenário cria. Comparar com as faturas já existentes daria resultados diferentes conforme o número de execuções anteriores (a sequência das faturas novas vai subindo a cada compra).
 
 > 🧹 Os cenários que criam produtos ou carrinhos apagam-nos no fim (hook `After`), por isso a base de dados fica como estava. Correm só na Toolshop local (tag `@so-local`, excluída automaticamente com outro `API_URL`).
-
----
-
-## 🗺️ Plano
-
-- [x] Estrutura do projeto (Cucumber + TypeScript)
-- [x] World e hooks
-- [x] Primeiro teste: catálogo de produtos
-- [x] Autenticação
-- [x] CRUD de produtos
-- [x] Carrinho
-- [x] Testes para os problemas encontrados na API (faturas e stock)
-- [x] Carrinho com vários produtos e desconto ecológico
-- [x] Email de confirmação da compra (servidor de email de testes)
-- [x] Métodos de pagamento (registo de cada método, verificação dos dados, compra com dados inválidos e dados sensíveis do cartão)
-- [x] Massa de teste em ficheiros JSON (produtos com nomes de negócio, países, províncias e pagamentos)
-- [x] Autorização: dados de outros clientes e funções reservadas ao administrador (OWASP API1 e API5)
-- [x] Registo de cliente e bloqueio de conta
-- [x] Tokens inválidos: alterado, sem assinatura, expirado e depois do logout
-- [x] Catálogo: paginação (próximo: pesquisa, filtros e ordenação)
-- [x] Relatórios HTML
-- [x] Integração contínua (GitHub Actions), com a Toolshop em Docker
 
 ---
 
@@ -364,9 +328,9 @@ Funcionalidade: Catálogo de produtos
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`. Quando só alguns exemplos de um esquema reproduzem um bug, ficam num bloco `Exemplos` à parte, com as tags e a descrição do bug, e os restantes continuam a correr normalmente.
 
-## 🔍 Achados
+## 🔍 Descobertas
 
-Diferenças entre a documentação (Swagger) e o comportamento real da API, encontradas ao escrever os testes:
+Diferenças entre a documentação (Swagger) e o comportamento real da API, e outras observações que não são bugs, encontradas ao escrever os testes:
 
 | Endpoint | Documentado | Real | Impacto |
 |---|---|---|---|
@@ -385,9 +349,74 @@ Diferenças entre a documentação (Swagger) e o comportamento real da API, enco
 
 > 🔎 **Da investigação (não coberto por testes):** para o administrador, o `in_stock` devolve o **número** de unidades em stock, e não verdadeiro ou falso como documenta o Swagger. Confirmado no código-fonte da Toolshop (`Product::getInStockAttribute`) e observado uma vez; não foi possível reproduzir de forma consistente (provavelmente por causa da cache do #10).
 
+---
+
+## 📂 Estrutura
+
+```
+features/    Cenários em Gherkin (português), um ficheiro por funcionalidade
+steps/       Definições dos passos, um ficheiro por funcionalidade (e comum.steps.ts)
+support/     world.ts e hooks.ts      estado de cada cenário, preparação e limpeza
+             contas.ts                contas de teste (variáveis de ambiente)
+             autenticacao.ts, jwt.ts  login e manipulação de tokens
+             produtos.ts, clientes.ts, pagamentos.ts, referencia.ts, dados.ts
+                                      dados de teste (a partir da pasta dados/)
+             carrinho.ts, compras.ts, faturas.ts
+                                      carrinho, compras e consulta das faturas
+             oraculos.ts, datas.ts    verificações e datas relativas (testadas à parte)
+             seguranca.ts             tokens e passwords escondidos nas mensagens
+             toolshop-local.ts        comandos na Toolshop local (docker exec)
+dados/       Massa de teste em JSON: produtos, clientes, países, províncias e pagamentos
+testes/      Testes unitários das verificações e das funções de apoio (node:test)
+cucumber.js  Configuração do Cucumber: perfis normal, lento e bugs
+.nvmrc       Versão do Node.js
+.vscode/     Configuração da extensão Cucumber do VS Code (navegação e autocompletar dos passos)
+.github/     Integração contínua (GitHub Actions)
+```
+### 🧪 Massa de teste
+
+Os dados de fundo dos cenários vivem em ficheiros JSON, na pasta `dados/`, separados do código:
+
+| Ficheiro | Conteúdo |
+|---|---|
+| `produtos.json` | Produtos do catálogo com nomes e descrições de negócio, em inglês como o resto da Toolshop. Cada produto criado por um cenário recebe uma referência única no nome (ex.: `Claw Hammer with Fiberglass Handle - ref. MHO7X2K9A3F`) |
+| `paises.json` | Os países dos cenários ("Portugal") e o código ISO que a API espera (`PT`) |
+| `provincias-argentina.json` | As 24 províncias argentinas, para verificar a pesquisa de morada |
+| `clientes.json` | Nomes e apelidos portugueses para as contas registadas pelos cenários |
+| `pagamentos.json` | Dados válidos de cada método de pagamento, com os nomes dos campos em português, iguais aos do Gherkin |
+
+Os dados que são o **tema** de um cenário (por exemplo, o código postal pesquisado ou um cartão inválido) ficam no próprio `.feature`, à vista de quem o lê. Para os ficheiros JSON vão só os dados de fundo. Um nome que não esteja na massa de teste (um país, um campo de pagamento) faz o teste falhar com uma mensagem clara, em vez de enviar à API um valor inventado.
+
+---
+
+## 🗺️ Plano
+
+- [x] Estrutura do projeto (Cucumber + TypeScript)
+- [x] World e hooks
+- [x] Primeiro teste: catálogo de produtos
+- [x] Autenticação
+- [x] CRUD de produtos
+- [x] Carrinho
+- [x] Testes para os problemas encontrados na API (faturas e stock)
+- [x] Carrinho com vários produtos e desconto ecológico
+- [x] Email de confirmação da compra (servidor de email de testes)
+- [x] Métodos de pagamento (registo de cada método, verificação dos dados, compra com dados inválidos e dados sensíveis do cartão)
+- [x] Massa de teste em ficheiros JSON (produtos com nomes de negócio, países, províncias e pagamentos)
+- [x] Autorização: dados de outros clientes e funções reservadas ao administrador (OWASP API1 e API5)
+- [x] Registo de cliente e bloqueio de conta
+- [x] Tokens inválidos: alterado, sem assinatura, expirado e depois do logout
+- [x] Catálogo: paginação (próximo: pesquisa, filtros e ordenação)
+- [x] Relatórios HTML
+- [x] Integração contínua (GitHub Actions), com a Toolshop em Docker
+- [x] Testes unitários das verificações e das funções de apoio, com sabotagens a confirmar que falham quando devem
+
 ### 💡 Próximos passos
 
-- Reescrever este projeto em **Java + REST Assured + Cucumber-JVM**, como segunda stack do portfolio.
+- Contrato das respostas com JSON Schema (`ajv`)
+- Catálogo: pesquisa, filtros e ordenação
+- Endpoints do Swagger ainda sem testes, por ordem de risco: utilizadores (ver e alterar outros, `role`), marcas e categorias sem login, relatórios, lista de faturas, alteração e recuperação de password, favoritos
+- Mensagens de falha mais legíveis no terminal
+- Reescrever este projeto em **Java + REST Assured + Cucumber-JVM**, como segunda stack do portfolio
 
 ---
 

@@ -1,2 +1,4 @@
 node_modules/
 resultados/
+# Material de apoio do assistente (fora do projeto)
+Claude outputs/
