@@ -9,9 +9,9 @@ Testes automatizados da API da **Toolshop** ([Practice Software Testing](https:/
 ![Cucumber](https://img.shields.io/badge/cucumber-13-23D96C?logo=cucumber&logoColor=white)
 ![Playwright](https://img.shields.io/badge/playwright-1.65-2EAD33?logo=playwright&logoColor=white)
 
-> **Em resumo:** testes de API REST de uma loja online, escritos em **Gherkin (português)** e automatizados com **Cucumber + Playwright + TypeScript**. Destaques: World e hooks, dados próprios em cada cenário (criados e apagados pela API), testes de segurança (autorização, tokens e dados de cartão), contratos das respostas com **JSON Schema**, a loja a correr em **Docker** na CI, e **26 issues** reportados (23 bugs e 3 desvios da documentação), cada um com um cenário que o reproduz.
+> **Em resumo:** testes de API REST de uma loja online, escritos em **Gherkin (português)** e automatizados com **Cucumber + Playwright + TypeScript**. Destaques: World e hooks, dados próprios em cada cenário (criados e apagados pela API), testes de segurança (autorização, tokens e dados de cartão), contratos das respostas com **JSON Schema**, a loja a correr em **Docker** na CI, e **28 issues** reportados (25 bugs e 3 desvios da documentação), cada um com um cenário que o reproduz.
 >
-> 🇬🇧 **In short:** REST API test suite for an e-commerce demo app, written in Gherkin (Portuguese) and automated with Cucumber + Playwright + TypeScript. Highlights: World and hooks, self-contained test data, security tests (authorization, tokens, card data), JSON Schema response contracts, the app running in Docker in CI, and 26 reported issues (23 bugs and 3 documentation mismatches), each with a scenario that reproduces it.
+> 🇬🇧 **In short:** REST API test suite for an e-commerce demo app, written in Gherkin (Portuguese) and automated with Cucumber + Playwright + TypeScript. Highlights: World and hooks, self-contained test data, security tests (authorization, tokens, card data), JSON Schema response contracts, the app running in Docker in CI, and 28 reported issues (25 bugs and 3 documentation mismatches), each with a scenario that reproduces it.
 
 > 🚧 **Projeto em construção.** Este README acompanha o estado real do repositório: só descreve o que já está feito.
 
@@ -168,9 +168,9 @@ Funcionalidade: Catálogo de produtos
 
 | Execuções de cenários | A passar ✅ | A reproduzir um bug 🐞 | Pendentes | Bugs distintos (issues) |
 |---|---|---|---|---|
-| 126 | 81 | 45 | 0 | 26 |
+| 145 | 96 | 49 | 0 | 28 |
 
-> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 45 execuções a vermelho correspondem a **26 issues** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (4: alterar o preço sem login e como cliente, com `PUT` e com `PATCH`), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1), #23 (1), #24 (2: lista de produtos e detalhe de um produto), #25 (1) e #26 (1).
+> Um esquema de cenário conta uma execução por exemplo, e um bug pode ser reproduzido por várias execuções: as 49 execuções a vermelho correspondem a **28 issues** — #1 (1 execução), #2 (3: Portugal, França e Reino Unido), #3 (1), #4 (1), #5 (2: campo e mensagem do erro), #6 (2: formato do erro da cidade e do distrito), #7 (1), #8 (1), #9 (2: compra acima do stock e produto esgotado no carrinho) #10 (1), #11 (1), #12 (1), #13 (2: resposta da compra diferente da fatura guardada e contas que falham por 1 cêntimo) #14 (4: CVV de 3 e de 4 algarismos, dois números de cartão) #15 (1) #16 (4: três cartões inválidos e uma conta com letras, numa compra), #17 (4: alterar o preço sem login e como cliente, com `PUT` e com `PATCH`), #18 (2: estado da fatura de outro cliente e da própria) #19 (1), #20 (3: faz 18 anos hoje, faz 75 e faz 80 anos hoje), #21 (1), #22 (1), #23 (1), #24 (2: lista de produtos e detalhe de um produto), #25 (1), #26 (1), #27 (1) e #28 (3: pesquisa sem termo, sentido de ordenação e preço que não é um número).
 
 **O que já é verificado**
 
@@ -180,6 +180,14 @@ Funcionalidade: Catálogo de produtos
 | Catálogo de produtos | A segunda página continua onde a primeira acabou | Página 2, 9 produtos, do 10.º ao 18.º (`current_page`, `per_page`, `from`, `to`) |
 | Catálogo de produtos | Uma página depois da última | Código 200, lista vazia, `from` e `to` a `null` (a página pedida vem do `last_page` da própria resposta) |
 | Catálogo de produtos | Percorrer todas as páginas, por omissão, por nome crescente e por preço decrescente | Recebem-se tantos produtos como o `total` indicado, **sem repetidos** entre páginas (uma ordenação instável faria produtos saltar de página) |
+| Catálogo de produtos | Percorrer todas as páginas por nome e por preço, crescente e decrescente | O catálogo inteiro vem na ordem pedida (não só a 1.ª página); nomes sem distinguir maiúsculas |
+| Catálogo de produtos | Pesquisar por `pliers`, `PLIERS`, `plie` e `crane` | Vêm **exatamente** os produtos cujo nome contém o termo, comparados com o catálogo completo percorrido à parte (a pesquisa inclui os alugueres) |
+| Catálogo de produtos | Pesquisar um termo que nenhum produto tem | Lista vazia |
+| Catálogo de produtos | Filtrar por categoria (Pliers), por marca e por preço (12.01 a 14.24) | Vêm exatamente os produtos do catálogo que cumprem o filtro; o *Bolt Cutters* entra na Pliers sem ter o nome; os limites do preço estão incluídos |
+| Catálogo de produtos | Categoria, marca, preço e ordenação juntos | Vêm exatamente os produtos que cumprem os três filtros, por preço crescente |
+| Catálogo de produtos | Produtos de aluguer | O catálogo não os mostra; com `is_rental=true` vêm só alugueres |
+| Catálogo de produtos 🐞 | Ordenar por um campo que não existe (`sort=foo,asc`) | 422 — **falha: erro 500** (bug [#27](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/27)) |
+| Catálogo de produtos 🐞 | Pesquisa sem termo, sentido de ordenação inválido, preço que não é um número | 422 — **falha: aceites com 200** (bug [#28](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/28)) |
 | Autenticação | Login com sucesso | Código 200, `access_token` em texto, `token_type` "bearer" (sem distinguir maiúsculas), `expires_in` numérico e positivo |
 | Autenticação | Login com um email que não existe | Código 401 |
 | Autenticação | Consultar os dados da conta depois do login | Código 200, campos da conta, **a password nunca é devolvida**, o email é o da conta com que se fez login |
@@ -336,6 +344,8 @@ Funcionalidade: Catálogo de produtos
 | [#24](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/24) | Documentação: em `GET /products` e `GET /products/{id}`, **a marca e a categoria vêm reduzidas** (faltam `slug`, `parent_id`, `sub_categories`) em relação ao Swagger | 🟡 Baixa | Aberto |
 | [#25](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/25) | Documentação: `GET /users/me` **não traz `enabled` nem `failed_login_attempts`**, que o Swagger documenta | 🟡 Baixa | Aberto |
 | [#26](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/26) | Documentação: `GET /invoices/{id}` traz **`null` em campos que o Swagger dá como número ou texto**, e um produto reduzido em cada linha | 🟡 Baixa | Aberto |
+| [#27](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/27) | `GET /products` com uma **ordenação por um campo que não existe** dá **erro 500** em vez de ser recusada | 🟠 Média | Aberto |
+| [#28](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/28) | Catálogo: **parâmetros fora do Swagger aceites em silêncio** (pesquisa sem termo, sentido de ordenação inválido, preço que não é um número lido como 0) | 🟡 Baixa | Aberto |
 
 Os cenários que reproduzem bugs ainda por corrigir têm a tag `@bug-conhecido` e a tag do seu issue (por exemplo, `@issue-5`), e logo por baixo do título uma descrição com o bug e o link, que aparece também nos relatórios. A execução normal (`npm test`) exclui-os, para que qualquer falha nova salte à vista; para os correr à parte, `npm run test:bugs`. Quando só alguns exemplos de um esquema reproduzem um bug, ficam num bloco `Exemplos` à parte, com as tags e a descrição do bug, e os restantes continuam a correr normalmente.
 
@@ -357,6 +367,9 @@ Diferenças entre a documentação (Swagger) e o comportamento real da API, e ou
 | `POST /products`, `PUT` e `PATCH /products/{id}` | Sem autenticação exigida (só o `DELETE` está protegido) | O `POST` aceita mesmo pedidos sem login (ver bug [#1](https://github.com/evangelistaaj/Projeto-toolshop-api/issues/1)) | 🔴 Documentação e implementação concordam, mas na direção errada |
 | Email de confirmação da compra | Não documentado | Enviado em segundo plano (fila `SendCheckoutEmail`), até cerca de 1 minuto depois da compra, com o assunto genérico **"Checkout"** | ℹ️ O assunto não identifica a loja nem a compra |
 | Email de confirmação da compra | Não documentado | **Não indica o método de pagamento** escolhido, nem a morada de faturação | 🟡 O cliente não tem no email o registo de como pagou |
+| `GET /products?by_category=` | "Id of category" | Uma categoria-mãe (ex.: Hand Tools) devolve **0 produtos**: as subcategorias não entram. Aceita vários ids separados por vírgula (não documentado), que é o que a interface envia | ⚠️ Quem integra tem de juntar as subcategorias à mão |
+| `GET /products` | `is_rental`: "Indication if we like to retrieve rentals" | Sem `is_rental`, os alugueres **ficam de fora**; a pesquisa (`/products/search`) inclui-os | ℹ️ O valor por omissão não está documentado |
+| `GET /products/search` | `q`: "A query phrase" | Procura só no **nome**, sem distinguir maiúsculas, e aceita parte de uma palavra (não procura na descrição nem na categoria) | ℹ️ O alcance da pesquisa não está documentado |
 
 > 🔎 **Da investigação (não coberto por testes):** para o administrador, o `in_stock` devolve o **número** de unidades em stock, e não verdadeiro ou falso como documenta o Swagger. Confirmado no código-fonte da Toolshop (`Product::getInStockAttribute`) e observado uma vez; não foi possível reproduzir de forma consistente (provavelmente por causa da cache do #10).
 
@@ -372,6 +385,7 @@ support/     world.ts e hooks.ts      estado de cada cenário, preparação e li
              autenticacao.ts, jwt.ts  login e manipulação de tokens
              produtos.ts, clientes.ts, pagamentos.ts, referencia.ts, dados.ts
                                       dados de teste (a partir da pasta dados/)
+             catalogo.ts              catálogo completo, ids de categorias e marcas
              carrinho.ts, compras.ts, faturas.ts
                                       carrinho, compras e consulta das faturas
              oraculos.ts, datas.ts    verificações e datas relativas (testadas à parte)
@@ -418,7 +432,7 @@ Os dados que são o **tema** de um cenário (por exemplo, o código postal pesqu
 - [x] Autorização: dados de outros clientes e funções reservadas ao administrador (OWASP API1 e API5)
 - [x] Registo de cliente e bloqueio de conta
 - [x] Tokens inválidos: alterado, sem assinatura, expirado e depois do logout
-- [x] Catálogo: paginação (próximo: pesquisa, filtros e ordenação)
+- [x] Catálogo: paginação, pesquisa, filtros e ordenação
 - [x] Relatórios HTML
 - [x] Integração contínua (GitHub Actions), com a Toolshop em Docker
 - [x] Testes unitários das verificações e das funções de apoio, com sabotagens a confirmar que falham quando devem
@@ -427,7 +441,6 @@ Os dados que são o **tema** de um cenário (por exemplo, o código postal pesqu
 
 ### 💡 Próximos passos
 
-- Catálogo: pesquisa, filtros e ordenação
 - Endpoints do Swagger ainda sem testes, por ordem de risco: utilizadores (ver e alterar outros, `role`), marcas e categorias sem login, relatórios, lista de faturas, alteração e recuperação de password, favoritos
 - Reescrever este projeto em **Java + REST Assured + Cucumber-JVM**, como segunda stack do portfolio
 

@@ -1,6 +1,7 @@
 import { World, setWorldConstructor } from '@cucumber/cucumber';
 import type { APIRequestContext, APIResponse } from '@playwright/test';
 import type { DadosProduto } from './produtos';
+import type { ProdutoDoCatalogo } from './catalogo';
 
 // O "mundo" de cada cenário: o Cucumber cria um novo por cenário
 // e entrega-o aos passos e hooks como `this`.
@@ -37,6 +38,11 @@ export class MundoToolshop extends World {
   // Catálogo percorrido página a página: os ids recebidos e o total que a API indicou.
   produtosPercorridos: string[] = [];
   totalDoCatalogo?: number;
+
+  // Pesquisa e filtros do catálogo: os produtos recebidos (todas as páginas), a regra que
+  // cada um devia cumprir e se os alugueres contam (a pesquisa inclui-os; o catálogo não).
+  produtosRecebidos: ProdutoDoCatalogo[] = [];
+  filtro?: { descricao: string; cumpre: (p: ProdutoDoCatalogo) => boolean; comAlugueres: boolean };
 
   // Código postal da última pesquisa de morada, para comparar com a resposta.
   codigoPostalPesquisado?: string;
