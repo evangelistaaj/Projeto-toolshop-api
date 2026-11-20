@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "cucumber-js",
-    "test:bugs": "cucumber-js -p bugs",
+    "test:unit": "node --import tsx --test --test-reporter=spec \"testes/unitarios/*.test.ts\"",
+    "test:bugs": "docker exec -d pst-laravel-api-1 php artisan queue:work --max-time=300 && cucumber-js -p bugs",
     "test:lento": "docker exec -d pst-laravel-api-1 php artisan queue:work --max-time=300 && cucumber-js -p lento",
     "db:reset": "docker exec pst-laravel-api-1 php artisan migrate:fresh --seed && docker exec pst-laravel-api-1 php artisan invoice:remove && docker exec -u root pst-laravel-api-1 chown -R www-data:www-data storage bootstrap/cache",
     "test:limpo": "npm run db:reset && npm test",

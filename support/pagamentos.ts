@@ -1,27 +1,7 @@
 import { defineParameterType } from '@cucumber/cucumber';
 import type { Pagamento } from './faturas';
 import { lerDados } from './dados';
-
-// Converte uma validade escrita no cenário no formato da API (MM/AAAA), a partir da data de hoje.
-// Formas aceites: "este mês", "o mês passado" e "daqui a N anos". Assim os cenários nunca caducam.
-export function validade(texto: string): string {
-  const daquiA = texto.match(/^daqui a (\d+) anos?$/);
-  let meses: number;
-  if (texto === 'este mês') {
-    meses = 0;
-  } else if (texto === 'o mês passado') {
-    meses = -1;
-  } else if (daquiA) {
-    meses = Number(daquiA[1]) * 12;
-  } else {
-    throw new Error(`Validade "${texto}" não reconhecida. Use "este mês", "o mês passado" ou "daqui a N anos".`);
-  }
-  // Conta em meses desde o ano 0, para não haver erros na passagem de ano (janeiro − 1 = dezembro do ano anterior).
-  const hoje = new Date();
-  const total = hoje.getFullYear() * 12 + hoje.getMonth() + meses;
-  const mes = String((total % 12) + 1).padStart(2, '0');
-  return `${mes}/${Math.floor(total / 12)}`;
-}
+import { validade } from './datas';
 
 // Nome de cada campo de pagamento no Gherkin → nome do campo na API.
 const CAMPOS: Record<string, string> = {

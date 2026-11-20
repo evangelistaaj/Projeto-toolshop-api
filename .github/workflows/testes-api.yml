@@ -71,6 +71,11 @@ jobs:
       - name: Verificar os tipos (TypeScript)
         run: npm run typecheck
 
+      # Os testes dos próprios testes: as verificações e as funções de apoio, com dados
+      # inventados. Correm em menos de um segundo, antes de a Toolshop ser precisa.
+      - name: Testes unitários (verificações e funções de apoio)
+        run: npm run test:unit
+
       - name: Repor os dados da Toolshop
         run: npm run db:reset
 

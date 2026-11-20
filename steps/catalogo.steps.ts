@@ -1,6 +1,7 @@
 import { When, Then } from '@cucumber/cucumber';
 import type { MundoToolshop } from '../support/world';
 import { expect } from '@playwright/test';
+import { repetidos } from '../support/oraculos';
 
 When('consulto o catálogo de produtos',
   async function (this: MundoToolshop) {
@@ -107,6 +108,5 @@ Then('recebo cada produto do catálogo uma só vez',
   async function (this: MundoToolshop) {
     const ids = this.produtosPercorridos;
     expect(ids.length, 'produtos recebidos = total que a API indicou').toBe(this.totalDoCatalogo);
-    const repetidos = ids.filter((id, i) => ids.indexOf(id) !== i);
-    expect(repetidos, 'produtos repetidos entre páginas').toEqual([]);
+    expect(repetidos(ids), 'produtos repetidos entre páginas').toEqual([]);
   });

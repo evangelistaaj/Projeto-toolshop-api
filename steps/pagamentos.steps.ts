@@ -3,31 +3,8 @@ import { expect } from '@playwright/test';
 import type { MundoToolshop } from '../support/world';
 import { comprarCarrinho, faturaDaCompra, moradaIndicada } from '../support/faturas';
 import { campoDaApi, detalhesDoPagamento, type MetodoDePagamento } from '../support/pagamentos';
+import { camposComNome, caminhosQueContem } from '../support/oraculos';
 import { corpoSeguro } from '../support/seguranca';
-
-// Todos os campos da resposta (a qualquer profundidade) cujo nome corresponde ao padrão,
-// com o caminho até eles. Serve para procurar dados sensíveis sem depender da estrutura.
-function camposComNome(valor: unknown, padrao: RegExp, caminho = 'fatura'): { caminho: string; valor: unknown }[] {
-  if (valor === null || typeof valor !== 'object') {
-    return [];
-  }
-  return Object.entries(valor).flatMap(([nome, filho]) => [
-    ...(padrao.test(nome) ? [{ caminho: `${caminho}.${nome}`, valor: filho }] : []),
-    ...camposComNome(filho, padrao, `${caminho}.${nome}`),
-  ]);
-}
-
-// Caminhos dos valores da resposta (a qualquer profundidade) que contêm algum dos textos procurados.
-// Devolve só os caminhos, para as mensagens de falha nunca mostrarem o dado sensível.
-function caminhosQueContem(valor: unknown, procurados: string[], caminho = 'fatura'): string[] {
-  if (typeof valor === 'string' || typeof valor === 'number') {
-    return procurados.some((p) => String(valor).includes(p)) ? [caminho] : [];
-  }
-  if (valor === null || typeof valor !== 'object') {
-    return [];
-  }
-  return Object.entries(valor).flatMap(([nome, filho]) => caminhosQueContem(filho, procurados, `${caminho}.${nome}`));
-}
 
 When('finalizo a compra pagando com {metodo}', async function (this: MundoToolshop, metodo: MetodoDePagamento) {
   await comprarCarrinho(this, moradaIndicada(this), metodo);

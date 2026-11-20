@@ -6,9 +6,9 @@ import {
   campoDoRegisto,
   comCampo,
   dadosDeClienteValidos,
-  dataDeNascimento,
   type DadosCliente,
 } from '../support/clientes';
+import { dataDeNascimento } from '../support/datas';
 import { corpoSeguro } from '../support/seguranca';
 
 // Envia o registo e, se for aceite, guarda a conta (para login e para a limpeza).

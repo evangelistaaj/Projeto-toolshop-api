@@ -2,6 +2,7 @@ import type { APIRequestContext } from '@playwright/test';
 import { contaAdmin } from './contas';
 import { lerDados } from './dados';
 import { normalizar } from './referencia';
+import { dataUtc } from './datas';
 
 // Nomes de clientes da massa de teste (dados/clientes.json).
 const CLIENTES = lerDados<{ nome: string; apelido: string }[]>('clientes.json');
@@ -19,26 +20,6 @@ export type DadosCliente = {
 
 function aoAcaso(tamanho: number): string {
   return Math.random().toString(36).slice(2, 2 + tamanho);
-}
-
-// Data AAAA-MM-DD, calculada em UTC (o fuso da API), a partir de hoje.
-function dataUtc(anos: number, dias = 0): string {
-  const hoje = new Date();
-  const data = new Date(Date.UTC(hoje.getUTCFullYear() - anos, hoje.getUTCMonth(), hoje.getUTCDate() + dias));
-  return data.toISOString().slice(0, 10);
-}
-
-// Data de nascimento de quem faz ou fez N anos num dia relativo a hoje:
-// "faz 18 anos hoje", "fez 18 anos ontem", "faz 18 anos amanhã".
-// Assim os cenários de idade nunca caducam. (Num 29 de fevereiro, a conta pode diferir
-// da do servidor num dia: a data de há N anos pode não existir.)
-export function dataDeNascimento(texto: string): string {
-  const partes = texto.match(/^(faz|fez) (\d+) anos (hoje|ontem|amanhã)$/);
-  if (!partes) {
-    throw new Error(`Idade "${texto}" não reconhecida. Use, por exemplo, "faz 18 anos hoje" ou "fez 18 anos ontem".`);
-  }
-  const dias = { hoje: 0, ontem: -1, 'amanhã': 1 }[partes[3] as 'hoje' | 'ontem' | 'amanhã'];
-  return dataUtc(Number(partes[2]), dias);
 }
 
 // Uma password aleatória que cumpre as regras da Toolshop (8+ caracteres, maiúsculas,

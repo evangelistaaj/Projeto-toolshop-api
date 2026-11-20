@@ -11,6 +11,7 @@
   },
   "include": [
     "steps/**/*.ts",
-    "support/**/*.ts"
+    "support/**/*.ts",
+    "testes/**/*.ts"
   ]
 }
