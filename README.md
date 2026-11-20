@@ -78,7 +78,7 @@ A versão do Node.js está em `.nvmrc` e no campo `engines` do `package.json`.
 | `npm run test:bugs` | Só os cenários que reproduzem bugs conhecidos (`@bug-conhecido`), com o resumo das falhas em `resultados/bugs.txt`. Arranca antes um processador da fila, como o `test:lento` |
 | `npm run test:limpo` | Repõe os dados da Toolshop local e corre `npm test` |
 | `npm run typecheck` | Verifica os tipos do TypeScript em todo o projeto, sem correr os testes |
-| `npm run test:unit` | Testes unitários das verificações e das funções de apoio (menos de 1 s, sem Toolshop) |
+| `npm run test:unit` | Testes unitários das verificações, das funções de apoio e do resumo das falhas (menos de 1 s, sem Toolshop) |
 | `npx cucumber-js -p bugs --tags @issue-5` | Só os cenários de um bug (cada um tem a tag do seu issue). O `-p bugs` é preciso: as tags da linha de comandos juntam-se às do perfil, e o perfil normal exclui os bugs conhecidos |
 
 ### 🤖 Integração contínua
@@ -277,6 +277,8 @@ Funcionalidade: Catálogo de produtos
 > O `test:bugs` precisa dele pela mesma razão, e com uma consequência pior: os cenários dos bugs do email (#11 e #12) chegaram a falhar por o email **não chegar a tempo**, em vez de falharem na verificação do bug. Um cenário de bug que falha pela razão errada esconde se o bug ainda existe: se o bug fosse corrigido, o cenário continuava vermelho, e ninguém dava por isso.
 
 > 🧪 **Testar os testes.** As verificações mais delicadas (dados de cartão expostos, produtos repetidos entre páginas), os tokens alterados e as datas relativas vivem em funções próprias (`support/oraculos.ts`, `support/jwt.ts`, `support/datas.ts`) e têm testes unitários com dados inventados (`npm run test:unit`): cada verificação é posta à prova com um caso que tem de apanhar e um controlo que tem de deixar passar. Para confirmar que estes testes têm valor, o código foi sabotado de propósito (por exemplo, `repetidos` a nunca encontrar nada); uma das sabotagens não foi apanhada à primeira, e isso levou a um teste novo. As datas usam um relógio simulado: incluem a passagem de ano, o 29 de fevereiro e o fuso horário.
+
+> 🖥️ **Terminal limpo.** O Cucumber usa um formatter próprio (`support/formatador-limpo.cjs`): um sinal por cenário enquanto corre e, no fim, cada falha num bloco curto, com o cenário, o ficheiro e a linha, o passo que falhou e o erro **sem a pilha do `node_modules`**, e um resumo (`✓ 78 a passar   ✗ 0 a falhar`). A limpeza da mensagem é uma função pura (`support/resumo-de-falha.cjs`) com testes unitários. O relatório HTML continua com tudo.
 
 > 🧭 **A fonte de verdade é a versão que corre.** O código-fonte da Toolshop no GitHub serve para encontrar suspeitas, mas a imagem publicada no Docker Hub pode ser mais antiga (foi assim com o código postal no registo, #23). Por isso, cada suspeita só vira issue depois de um teste a confirmar contra a aplicação real.
 

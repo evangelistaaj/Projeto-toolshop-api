@@ -14,13 +14,17 @@ const comum = {
   require: ['steps/**/*.ts', 'support/**/*.ts'],
 };
 
-// Cada perfil mostra o progresso no terminal e grava um relatório HTML em resultados/.
+// O terminal usa um formatter próprio (support/formatador-limpo.cjs): um sinal por cenário
+// e, no fim, cada falha num bloco curto, sem a pilha do node_modules. Cada perfil grava
+// também um relatório HTML completo em resultados/.
+const LIMPO = './support/formatador-limpo.cjs';
+
 module.exports = {
   // Execução normal: rápida, sem bugs conhecidos nem cenários lentos.
   default: {
     ...comum,
     tags: soLocal('not @bug-conhecido and not @lento'),
-    format: ['progress', 'html:resultados/relatorio.html'],
+    format: [LIMPO, 'html:resultados/relatorio.html'],
   },
 
   // Só os bugs conhecidos: para ver se já foram corrigidos.
@@ -28,13 +32,13 @@ module.exports = {
   bugs: {
     ...comum,
     tags: soLocal('@bug-conhecido'),
-    format: ['progress', 'summary:resultados/bugs.txt', 'html:resultados/bugs.html'],
+    format: [LIMPO, `${LIMPO}:resultados/bugs.txt`, 'html:resultados/bugs.html'],
   },
 
   // Só os cenários lentos (esperam por processos em segundo plano).
   lento: {
     ...comum,
     tags: soLocal('@lento and not @bug-conhecido'),
-    format: ['progress', 'html:resultados/lento.html'],
+    format: [LIMPO, 'html:resultados/lento.html'],
   },
 };
